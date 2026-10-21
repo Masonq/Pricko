@@ -10,12 +10,17 @@ env:
   REL: https://github.com/${{ github.repository }}/releases/download/latest/
 jobs:
   ios:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - name: Самый новый Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$XC" && xcodebuild -version
       - name: Зависимости
         working-directory: app
         run: npm ci --no-audit --no-fund
@@ -31,7 +36,8 @@ jobs:
           set -o pipefail
           WS=$(ls -d *.xcworkspace | head -1); SCHEME="${WS%.xcworkspace}"
           xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tail -n 200 | tee ../../build-ios.log
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" > ../../build-ios.log 2>&1 \
+            || { grep -n -B2 -A8 "error:\|failed\|Error " ../../build-ios.log | tail -n 120; exit 1; }
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
           mkdir -p Payload && cp -R "$APP" Payload/ && zip -qry ../../pricko.ipa Payload
       - name: Источник SideStore

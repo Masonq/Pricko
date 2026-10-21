@@ -1,15 +1,30 @@
 {
-  "time": "2026-10-22 02:42:30",
+  "time": "2026-10-22 02:45:26",
   "keys": {
     "groq": true,
     "mistral": true
   },
+  "cascade": [
+    "groq:openai/gpt-oss-120b",
+    "groq:openai/gpt-oss-20b",
+    "mistral:mistral-medium-latest",
+    "mistral:mistral-small-latest"
+  ],
   "llm": {
-    "openai/gpt-oss-120b": "400 293ms {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_",
-    "llama-3.3-70b-versatile": "404 21ms {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found",
-    "mistral-large-latest": "403 150ms {\"object\":\"error\",\"message\":\"This model is not available in your subscription tier\",\"type\":\"tier_not_allowed\",\"param\":null,\"code\":\"1910\",\"raw_status_code\":403}",
-    "mistral-small-latest": "429 337ms {\"object\":\"error\",\"message\":\"Rate limit exceeded\",\"type\":\"rate_limited\",\"param\":null,\"code\":\"1300\",\"raw_status_code\":429}"
+    "openai/gpt-oss-120b": "ok 670ms {\"reply\": \"Naravno, i jogurt? \", \"translation\": \"\", \"correction\": {\"wrong\": \"sir\", \"right\": \"sirom\", \"why\": \"В сербском после предлога 'sa' используется творительный падеж: 'sa sirom'.\"}, \"hint\": \"Molim još jedan jogurt.",
+    "openai/gpt-oss-20b": "ok 265ms {\"reply\": \"Naravno, jedan burek sa sirom. Da li želite i jogurt?\", \"translation\": \"Конечно, один буре с сыром. Хотите ли вы также йогурт?\", \"correction\": null, \"hint\": \"Da, želim i jogurt, molim.\", \"done\": false}",
+    "mistral-medium-latest": "ошибка ai_busy",
+    "mistral-small-latest": "ошибка ai_busy"
   },
-  "tts": "ошибка 403, message='Invalid response status', url='wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&Sec-MS-GEC=5F62FB0B6C34FEE02B9D0B688F1C6F5C7C3FD970A9925302A7B60EB35627BB4C&Sec-MS-GEC-Version=1-130.0.2849.68&ConnectionId=62ca0d089a484998bf20fb53963dc2ff'",
-  "stt": "ошибка 503: stt_busy"
+  "tts": {
+    "url": "/media/t_e6db23854e3a4cc0ad954b0ecc52dacc.mp3",
+    "attempts": [
+      {
+        "provider": "sr-RS-SophieNeural",
+        "ok": 1,
+        "note": ""
+      }
+    ]
+  },
+  "stt": "ok: Dober Dan Džiden Berksis Saйrom, Malam"
 }

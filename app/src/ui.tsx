@@ -1,0 +1,73 @@
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import React from 'react';
+import { Pressable, PressableProps, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { C, F, R } from './theme';
+
+const AP = Animated.createAnimatedComponent(Pressable);
+export function Press({ style, children, scale = 0.96, haptic = true, onPress, ...rest }: PressableProps & { style?: StyleProp<ViewStyle>; scale?: number; haptic?: boolean; children?: React.ReactNode }) {
+  const s = useSharedValue(1);
+  const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  return (
+    <AP {...rest} style={[style, a]}
+      onPressIn={e => { s.value = withSpring(scale, { damping: 18, stiffness: 420 }); rest.onPressIn?.(e); }}
+      onPressOut={e => { s.value = withSpring(1, { damping: 12, stiffness: 260 }); rest.onPressOut?.(e); }}
+      onPress={e => { if (haptic) Haptics.selectionAsync().catch(() => {}); onPress?.(e); }}>
+      {children}
+    </AP>
+  );
+}
+
+export function Header({ title, right, back = true }: { title?: string; right?: React.ReactNode; back?: boolean }) {
+  const ins = useSafeAreaInsets();
+  return (
+    <View style={[st.header, { paddingTop: ins.top + 6 }]}>
+      {back ? (
+        <Press accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.back()} style={st.round}>
+          <Text style={st.backArrow}>‹</Text>
+        </Press>
+      ) : <View style={st.roundGhost} />}
+      <Text numberOfLines={1} style={st.htitle}>{title ?? ''}</Text>
+      <View style={st.roundGhost}>{right}</View>
+    </View>
+  );
+}
+
+export function H1({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) { return <Text style={[st.h1, style]}>{children}</Text>; }
+export function H2({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) { return <Text style={[st.h2, style]}>{children}</Text>; }
+export function P({ children, style, numberOfLines }: { children: React.ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number }) { return <Text numberOfLines={numberOfLines} style={[st.p, style]}>{children}</Text>; }
+
+export function Button({ title, onPress, disabled, kind = 'primary', style }: { title: string; onPress: () => void; disabled?: boolean; kind?: 'primary' | 'ghost'; style?: StyleProp<ViewStyle> }) {
+  return (
+    <Press disabled={disabled} onPress={onPress} style={[st.btn, kind === 'ghost' && st.btnGhost, disabled && { opacity: 0.45 }, style]}>
+      <Text style={[st.btnText, kind === 'ghost' && { color: C.ink }]}>{title}</Text>
+    </Press>
+  );
+}
+
+export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPress: () => void }) {
+  return (
+    <Press onPress={onPress} style={[st.chip, on && st.chipOn]} scale={0.93}>
+      <Text style={[st.chipText, on && { color: '#FFF4E0' }]}>{label}</Text>
+    </Press>
+  );
+}
+
+const st = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8, backgroundColor: C.paper, zIndex: 5 },
+  round: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  roundGhost: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  backArrow: { fontSize: 32, lineHeight: 34, color: C.ink, marginTop: -3, marginLeft: -2, fontFamily: F.bodyBold },
+  htitle: { flex: 1, textAlign: 'center', fontFamily: F.display, fontSize: 21, color: C.ink, marginHorizontal: 8 },
+  h1: { fontFamily: F.display, fontSize: 38, lineHeight: 42, color: C.ink, letterSpacing: -0.3 },
+  h2: { fontFamily: F.display, fontSize: 26, lineHeight: 30, color: C.ink },
+  p: { fontFamily: F.body, fontSize: 16, lineHeight: 23, color: C.soft },
+  btn: { height: 56, borderRadius: R.pill, backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  btnGhost: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.line },
+  btnText: { fontFamily: F.bodyHeavy, fontSize: 17, color: '#FFF4E0' },
+  chip: { paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
+  chipOn: { backgroundColor: C.indigo, borderColor: C.indigo },
+  chipText: { fontFamily: F.bodyBold, fontSize: 14.5, color: C.ink },
+});

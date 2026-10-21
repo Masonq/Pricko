@@ -1,0 +1,10 @@
+node_modules/
+app/.expo/
+app/ios/
+app/android/
+app/dist/
+.venv/
+data/
+.env
+__pycache__/
+*.pyc

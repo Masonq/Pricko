@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Pričko",
+    "slug": "pricko",
+    "scheme": "pricko",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "rs.pricko.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Pričko sluša tvoj glas da bi mogao da razgovara s tobom na srpskom.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "sr",
+        "CFBundleLocalizations": [
+          "sr",
+          "ru",
+          "en"
+        ]
+      }
+    },
+    "android": {
+      "package": "rs.pricko.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFF4E0"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Pričko sluša tvoj glas da bi mogao da razgovara s tobom na srpskom."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "backgroundColor": "#FFF4E0",
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "api": "http://89.208.113.147:8077"
+    }
+  }
+}

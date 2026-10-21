@@ -1,0 +1,86 @@
+name: Сборка приложения
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/native.yml']
+  workflow_dispatch:
+concurrency: { group: native, cancel-in-progress: true }
+permissions: { contents: write }
+env:
+  REL: https://github.com/${{ github.repository }}/releases/download/latest/
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - name: Зависимости
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Номер версии
+        working-directory: app
+        run: node -e "const f='app.json',c=require('./'+f),n=process.env.GITHUB_RUN_NUMBER;c.expo.version='1.0.'+n;c.expo.ios.buildNumber=n;c.expo.android.versionCode=+n;require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
+      - name: Подготовка iOS
+        working-directory: app
+        run: set -o pipefail; npx expo prebuild --platform ios --clean 2>&1 | tee ../prebuild-ios.log
+      - name: Сборка iOS (без подписи — подписывает SideStore)
+        working-directory: app/ios
+        run: |
+          set -o pipefail
+          WS=$(ls -d *.xcworkspace | head -1); SCHEME="${WS%.xcworkspace}"
+          xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tail -n 200 | tee ../../build-ios.log
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          mkdir -p Payload && cp -R "$APP" Payload/ && zip -qry ../../pricko.ipa Payload
+      - name: Источник SideStore
+        run: |
+          node -e "
+          const fs=require('fs'),n=process.env.GITHUB_RUN_NUMBER,base=process.env.REL;
+          const notes=fs.readFileSync('app/whats-new/next.md','utf8').trim();
+          const icon='https://raw.githubusercontent.com/${{ github.repository }}/main/app/assets/icon.png';
+          const v={version:'1.0.'+n,buildVersion:String(n),date:new Date().toISOString().slice(0,10),downloadURL:base+'pricko.ipa',size:fs.statSync('pricko.ipa').size,minOSVersion:'16.4',localizedDescription:notes};
+          const app={name:'Pričko',bundleIdentifier:'rs.pricko.app',developerName:'Pričko',subtitle:'Srpski kroz razgovor i priče',localizedDescription:'Pričko: razgovor na srpskom i bajke za decu.',iconURL:icon,tintColor:'#2D3C78',versions:[v],version:v.version,versionDate:v.date,versionDescription:notes,downloadURL:v.downloadURL,size:v.size,appPermissions:{entitlements:[],privacy:{NSMicrophoneUsageDescription:'Pričko sluša tvoj glas.'}}};
+          fs.writeFileSync('sidestore.json',JSON.stringify({name:'Pričko',identifier:'rs.pricko.source',sourceURL:base+'sidestore.json',iconURL:icon,apps:[app],news:[]},null,2));"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Pričko — тестовая сборка
+          prerelease: true
+          make_latest: false
+          files: |
+            pricko.ipa
+            sidestore.json
+      - name: Логи при ошибке
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: ios-logs, path: '*.log', if-no-files-found: ignore }
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - name: Зависимости
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Номер версии
+        working-directory: app
+        run: node -e "const f='app.json',c=require('./'+f),n=process.env.GITHUB_RUN_NUMBER;c.expo.version='1.0.'+n;c.expo.android.versionCode=+n;require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
+      - name: Сборка Android
+        working-directory: app
+        run: |
+          npx expo prebuild --platform android --clean
+          cd android && ./gradlew assembleRelease --no-daemon -q
+          cp app/build/outputs/apk/release/app-release.apk ../../pricko.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Pričko — тестовая сборка
+          prerelease: true
+          make_latest: false
+          files: pricko.apk

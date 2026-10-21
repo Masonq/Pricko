@@ -1,5 +1,5 @@
 {
-  "time": "2026-10-22 02:45:26",
+  "time": "2026-10-22 02:46:45",
   "keys": {
     "groq": true,
     "mistral": true
@@ -11,14 +11,19 @@
     "mistral:mistral-small-latest"
   ],
   "llm": {
-    "openai/gpt-oss-120b": "ok 670ms {\"reply\": \"Naravno, i jogurt? \", \"translation\": \"\", \"correction\": {\"wrong\": \"sir\", \"right\": \"sirom\", \"why\": \"В сербском после предлога 'sa' используется творительный падеж: 'sa sirom'.\"}, \"hint\": \"Molim još jedan jogurt.",
-    "openai/gpt-oss-20b": "ok 265ms {\"reply\": \"Naravno, jedan burek sa sirom. Da li želite i jogurt?\", \"translation\": \"Конечно, один буре с сыром. Хотите ли вы также йогурт?\", \"correction\": null, \"hint\": \"Da, želim i jogurt, molim.\", \"done\": false}",
-    "mistral-medium-latest": "ошибка ai_busy",
-    "mistral-small-latest": "ошибка ai_busy"
+    "openai/gpt-oss-120b": "ok 902ms {\"reply\": \"Naravno, jedan burek sa sirom. Da li želite i jogurt?\", \"translation\": \"Конечно, один бурек с сыром. Хотите ещё йогурт?\", \"correction\": {\"wrong\": \"Jedan burek sa sir\", \"right\": \"Jedan burek sa sirom\", \"why\": \"",
+    "openai/gpt-oss-20b": "ok 351ms {\"reply\": \"Naravno, jedan burek sa sirom. Želite li i jogurt?\", \"translation\": \"Конечно, один бурак с сыром. Хотите ли вы также йогурт?\", \"correction\": null, \"hint\": \"Da, jedan jogurt, molim.\", \"done\": false}",
+    "mistral-medium-latest": "ошибка ai_busy: 429 {\"object\":\"error\",\"message\":\"Rate limit exceeded\",\"type\":\"rate_limited\",\"param\":null,\"code\":\"1300\",\"raw_status_code\":429}",
+    "mistral-small-latest": "ошибка ai_busy: 429 {\"object\":\"error\",\"message\":\"Rate limit exceeded\",\"type\":\"rate_limited\",\"param\":null,\"code\":\"1300\",\"raw_status_code\":429}"
   },
   "tts": {
-    "url": "/media/t_e6db23854e3a4cc0ad954b0ecc52dacc.mp3",
+    "url": "/media/t_06a559cf32f94ebb9a4f58a70c26e548.mp3",
     "attempts": [
+      {
+        "provider": "sr-RS-SophieNeural",
+        "ok": 1,
+        "note": ""
+      },
       {
         "provider": "sr-RS-SophieNeural",
         "ok": 1,
@@ -26,5 +31,11 @@
       }
     ]
   },
-  "stt": "ok: Dober Dan Džiden Berksis Saйrom, Malam"
+  "stt": {
+    "sr": "0.72 Dobar dan! Čitam berksesirom, malim!",
+    "hr": "0.77 Dobar dan! Čitam brksa sajrom, malim!",
+    "bs": "0.76 Dobar dan! Čitin birksis sirom, malim!",
+    "auto": "0.77 Dobar dan! Jidin birksisairam, malim!"
+  },
+  "stt_choice": "hr"
 }

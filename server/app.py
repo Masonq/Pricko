@@ -47,6 +47,7 @@ def event(kind, provider, ok, ms, note=""):
 CYR = dict(zip("абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШ",
   ["a","b","v","g","d","đ","e","ž","z","i","j","k","l","lj","m","n","nj","o","p","r","s","t","ć","u","f","h","c","č","dž","š",
    "A","B","V","G","D","Đ","E","Ž","Z","I","J","K","L","Lj","M","N","Nj","O","P","R","S","T","Ć","U","F","H","C","Č","Dž","Š"]))
+CYR.update({"й": "j", "Й": "J", "ы": "i", "э": "e", "Э": "E", "ю": "ju", "Ю": "Ju", "я": "ja", "Я": "Ja", "ё": "jo", "щ": "šč", "ъ": "", "ь": ""})
 def lat(s: str) -> str: return "".join(CYR.get(ch, ch) for ch in s or "")
 
 # ---------- ИИ: каскад провайдеров (список моделей берётся у провайдеров, мёртвые пропускаются) ----------
@@ -106,13 +107,21 @@ async def llm(system: str, messages: list, max_tokens=700, temperature=0.7) -> d
                     break
     raise HTTPException(503, "ai_busy")
 
-async def stt(audio: bytes, filename: str) -> str:
+def stt_lang() -> str:
+    f = DATA / "stt_lang.txt"
+    return f.read_text().strip() if f.exists() else "hr"
+
+async def stt(audio: bytes, filename: str, lang: Optional[str] = None, prompt: str = "") -> str:
+    lang = lang if lang is not None else stt_lang()
     async with httpx.AsyncClient(timeout=45) as cl:
         for model in ("whisper-large-v3", "whisper-large-v3-turbo"):
             t0 = time.time()
             try:
+                data = {"model": model, "response_format": "json", "temperature": "0"}
+                if lang and lang != "auto": data["language"] = lang
+                if prompt: data["prompt"] = prompt[:200]
                 r = await cl.post("https://api.groq.com/openai/v1/audio/transcriptions", headers={"Authorization": f"Bearer {GROQ}"},
-                                  files={"file": (filename, audio)}, data={"model": model, "language": "sr", "response_format": "json", "temperature": "0"})
+                                  files={"file": (filename, audio)}, data=data)
                 if r.status_code != 200: raise RuntimeError(f"{r.status_code} {r.text[:200]}")
                 event("stt", model, True, int((time.time()-t0)*1000)); return lat(r.json().get("text", "").strip())
             except Exception as e:
@@ -159,7 +168,7 @@ Rules:
 - Stay in character. Reply in natural, simple spoken Serbian, LATIN script only, 1–2 short sentences (max 22 words).
 - Keep the conversation moving toward this goal: {sc['goal']['en']}. Ask one simple question back.
 - If the learner's last message has a real grammar or word mistake, give ONE correction: the wrong fragment and the corrected fragment, plus a very short explanation in {LANGNAME[ui]}. Never invent mistakes. If it is fine, correction is null.
-- "translation": your reply translated to {LANGNAME[ui]} (empty string if {LANGNAME[ui]} is Serbian).
+- "translation": REQUIRED — your reply fully translated into {LANGNAME[ui]}{" (use an empty string, the learner speaks Serbian)" if ui == "sr" else ", never empty"}.
 - "hint": one short example of what the learner could say next, in Serbian Latin.
 - "done": true only when the goal is clearly reached.
 Answer ONLY as JSON: {{"reply": str, "translation": str, "correction": {{"wrong": str, "right": str, "why": str}} | null, "hint": str, "done": bool}}"""
@@ -191,7 +200,7 @@ async def talk(scenario: str = Form(...), history: str = Form("[]"), ui: str = F
     if audio is not None:
         data = await audio.read()
         if len(data) > 8_000_000: raise HTTPException(413, "audio_too_big")
-        heard = await stt(data, audio.filename or "rec.m4a")
+        heard = await stt(data, audio.filename or "rec.m4a", prompt=f"Razgovor na srpskom latinicom. {sc['open']} {sc['goal']['sr']}.")
     heard = lat(heard)
     if not heard: return {"heard": "", "empty": True}
     try: hist = json.loads(history)[-12:]

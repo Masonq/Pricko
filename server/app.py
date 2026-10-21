@@ -49,15 +49,35 @@ CYR = dict(zip("абвгдђежзијклљмнњопрстћуфхцчџшАБ
    "A","B","V","G","D","Đ","E","Ž","Z","I","J","K","L","Lj","M","N","Nj","O","P","R","S","T","Ć","U","F","H","C","Č","Dž","Š"]))
 def lat(s: str) -> str: return "".join(CYR.get(ch, ch) for ch in s or "")
 
-# ---------- ИИ: каскад провайдеров ----------
-LLMS = [("groq", "https://api.groq.com/openai/v1", "openai/gpt-oss-120b"),
-        ("groq", "https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
-        ("mistral", "https://api.mistral.ai/v1", "mistral-large-latest"),
-        ("mistral", "https://api.mistral.ai/v1", "mistral-small-latest")]
+# ---------- ИИ: каскад провайдеров (список моделей берётся у провайдеров, мёртвые пропускаются) ----------
+GROQ_PREF = ["openai/gpt-oss-120b", "moonshotai/kimi-k2-instruct-0905", "moonshotai/kimi-k2-instruct", "qwen/qwen3-32b",
+             "meta-llama/llama-4-maverick-17b-128e-instruct", "openai/gpt-oss-20b", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.3-70b-versatile"]
+MISTRAL_PREF = ["mistral-medium-latest", "mistral-small-latest", "open-mistral-nemo", "ministral-8b-latest"]
+BASES = {"groq": "https://api.groq.com/openai/v1", "mistral": "https://api.mistral.ai/v1"}
+LLMS: list = [("groq", BASES["groq"], m) for m in GROQ_PREF[:3]] + [("mistral", BASES["mistral"], m) for m in MISTRAL_PREF[1:3]]
 def key_for(p): return GROQ if p == "groq" else MISTRAL
 
+async def discover():
+    """Спросить у провайдеров, какие модели реально доступны, и собрать каскад."""
+    global LLMS
+    found = []
+    async with httpx.AsyncClient(timeout=20) as cl:
+        for prov, pref in (("groq", GROQ_PREF), ("mistral", MISTRAL_PREF)):
+            k = key_for(prov)
+            if not k: continue
+            try:
+                r = await cl.get(f"{BASES[prov]}/models", headers={"Authorization": f"Bearer {k}"})
+                have = {m["id"] for m in r.json().get("data", [])}
+                ok = [m for m in pref if m in have][: 3 if prov == "groq" else 2]
+                found += [(prov, BASES[prov], m) for m in ok]
+            except Exception as e:
+                log.warning("discover %s: %s", prov, e)
+    if found: LLMS = found
+    log.info("LLM cascade: %s", [m for _, _, m in LLMS])
+
 def parse_json(txt: str) -> dict:
-    txt = (txt or "").strip()
+    txt = re.sub(r"<think>.*?</think>", "", txt or "", flags=re.S).strip()
+    txt = re.sub(r"^```(?:json)?|```$", "", txt.strip(), flags=re.M).strip()
     try: return json.loads(txt)
     except Exception: pass
     m = re.search(r"\{.*\}", txt, re.S)
@@ -65,21 +85,25 @@ def parse_json(txt: str) -> dict:
     return json.loads(m.group(0))
 
 async def llm(system: str, messages: list, max_tokens=700, temperature=0.7) -> dict:
-    last = None
     async with httpx.AsyncClient(timeout=45) as cl:
-        for prov, base, model in LLMS:
+        for prov, base, model in list(LLMS):
             k = key_for(prov)
             if not k: continue
-            t0 = time.time()
-            try:
-                body = {"model": model, "messages": [{"role": "system", "content": system}] + messages,
-                        "temperature": temperature, "max_tokens": max_tokens, "response_format": {"type": "json_object"}}
-                r = await cl.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {k}"}, json=body)
-                if r.status_code != 200: raise RuntimeError(f"{r.status_code} {r.text[:200]}")
-                out = parse_json(r.json()["choices"][0]["message"]["content"])
-                event("llm", f"{prov}:{model}", True, int((time.time()-t0)*1000)); return out
-            except Exception as e:
-                last = e; event("llm", f"{prov}:{model}", False, int((time.time()-t0)*1000), str(e)); log.warning("llm %s %s: %s", prov, model, e)
+            for attempt in range(2):
+                t0 = time.time()
+                try:
+                    body = {"model": model, "messages": [{"role": "system", "content": system + "\nReturn only the JSON object, no other text."}] + messages,
+                            "temperature": temperature, "max_tokens": max_tokens}
+                    if prov == "mistral": body["response_format"] = {"type": "json_object"}
+                    if model.startswith("openai/gpt-oss"): body["reasoning_effort"] = "low"; body["max_tokens"] = max_tokens + 600
+                    r = await cl.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {k}"}, json=body)
+                    if r.status_code == 429 and attempt == 0: await asyncio.sleep(1.5); continue
+                    if r.status_code != 200: raise RuntimeError(f"{r.status_code} {r.text[:200]}")
+                    out = parse_json(r.json()["choices"][0]["message"].get("content") or "")
+                    event("llm", f"{prov}:{model}", True, int((time.time()-t0)*1000)); return out
+                except Exception as e:
+                    event("llm", f"{prov}:{model}", False, int((time.time()-t0)*1000), str(e)); log.warning("llm %s %s: %s", prov, model, e)
+                    break
     raise HTTPException(503, "ai_busy")
 
 async def stt(audio: bytes, filename: str) -> str:
@@ -96,12 +120,21 @@ async def stt(audio: bytes, filename: str) -> str:
     raise HTTPException(503, "stt_busy")
 
 async def tts(text: str, voice: str, rate: str = "+0%", prefix: str = "t_") -> Optional[str]:
-    name = f"{prefix}{uuid.uuid4().hex}.mp3"; t0 = time.time()
+    """Озвучка: голос Microsoft (edge-tts), запасной — Google (gTTS)."""
+    name = f"{prefix}{uuid.uuid4().hex}.mp3"; path = MEDIA / name; t0 = time.time()
     try:
-        await edge_tts.Communicate(text, voice, rate=rate).save(str(MEDIA / name))
+        await edge_tts.Communicate(text, voice, rate=rate).save(str(path))
+        if path.stat().st_size < 500: raise RuntimeError("empty audio")
         event("tts", voice, True, int((time.time()-t0)*1000)); return f"/media/{name}"
     except Exception as e:
-        event("tts", voice, False, int((time.time()-t0)*1000), str(e)); log.warning("tts: %s", e); return None
+        event("tts", voice, False, int((time.time()-t0)*1000), str(e)); log.warning("tts edge: %s", e)
+    t0 = time.time()
+    try:
+        from gtts import gTTS
+        await asyncio.to_thread(lambda: gTTS(text, lang="sr", slow=rate.startswith("-1")).save(str(path)))
+        event("tts", "gtts", True, int((time.time()-t0)*1000)); return f"/media/{name}"
+    except Exception as e:
+        event("tts", "gtts", False, int((time.time()-t0)*1000), str(e)); log.warning("tts gtts: %s", e); return None
 
 # ---------- сценарии ----------
 SCENARIOS = {
@@ -141,7 +174,7 @@ async def nocache(request: Request, call_next):
     return resp
 
 @app.get("/api/health")
-async def health(): return {"ok": True, "groq": bool(GROQ), "mistral": bool(MISTRAL)}
+async def health(): return {"ok": True, "groq": bool(GROQ), "mistral": bool(MISTRAL), "models": [m for _, _, m in LLMS]}
 
 @app.get("/api/scenarios")
 async def scenarios():
@@ -234,5 +267,10 @@ async def cleanup():
             except Exception: pass
         await asyncio.sleep(6 * 3600)
 
+async def rediscover():
+    while True:
+        await discover(); await asyncio.sleep(6 * 3600)
+
 @app.on_event("startup")
-async def _start(): asyncio.create_task(cleanup())
+async def _start():
+    asyncio.create_task(cleanup()); asyncio.create_task(rediscover())

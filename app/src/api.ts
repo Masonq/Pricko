@@ -30,5 +30,17 @@ export async function talk(device: string, a: { scenario: string; history: { rol
   return req('/api/talk2', { method: 'POST', body: JSON.stringify({ scenario: a.scenario, history: a.history, ui: a.ui, text: a.text || '', audio_b64, ext }),
     headers: { 'Content-Type': 'application/json' } }, device) as Promise<TalkReply>;
 }
-export const say = (device: string, text: string) => req('/api/say', { method: 'POST', body: JSON.stringify({ text }), headers: { 'Content-Type': 'application/json' } }, device, 20000) as Promise<{ audio: string | null }>;
+export const say = (device: string, text: string, slow = false) => req('/api/say', { method: 'POST', body: JSON.stringify({ text, slow }), headers: { 'Content-Type': 'application/json' } }, device, 20000) as Promise<{ audio: string | null }>;
 export const makeStory = (device: string, body: object) => req('/api/story', { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }, device, 90000);
+
+const sayCache = new Map<string, string>();
+export async function sayCached(device: string, text: string, slow = false) {
+  const k = (slow ? 's|' : 'n|') + text; const c = sayCache.get(k); if (c) return c;
+  const r = await say(device, text, slow); if (r.audio) sayCache.set(k, r.audio); return r.audio;
+}
+export async function sttCheck(device: string, audioUri: string, expect: string): Promise<string> {
+  const uri = audioUri.includes('://') ? audioUri : 'file://' + audioUri;
+  const audio_b64 = await new File(uri).base64();
+  const r = await req('/api/stt', { method: 'POST', body: JSON.stringify({ audio_b64, ext: (uri.split('.').pop() || 'm4a').slice(0, 5), expect }), headers: { 'Content-Type': 'application/json' } }, device, 30000);
+  return r.text || '';
+}

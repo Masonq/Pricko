@@ -247,9 +247,29 @@ async def _talk(scenario, history, ui, text, data, filename, x_device):
 
 @app.post("/api/say")
 async def say(payload: dict):
+    """Озвучка фразы. Одинаковые фразы кэшируются навсегда (уроки не тратят повторные запросы)."""
+    import hashlib
     t = lat(str(payload.get("text", ""))[:400]).strip()
     if not t: raise HTTPException(400, "text")
-    return {"audio": await tts(t, VOICE_TALK, "-15%")}
+    slow = bool(payload.get("slow"))
+    rate = "-40%" if slow else "-15%"
+    key = hashlib.sha1(f"{t}|{rate}|{VOICE_TALK}".encode()).hexdigest()[:20]
+    f = MEDIA / f"c_{key}.mp3"
+    if f.exists() and f.stat().st_size > 500: return {"audio": f"/media/{f.name}"}
+    url = await tts(t, VOICE_TALK, rate, "tmp_")
+    if not url: return {"audio": None}
+    (MEDIA / url.split("/")[-1]).replace(f)
+    return {"audio": f"/media/{f.name}"}
+
+@app.post("/api/stt")
+async def stt_only(payload: dict, x_device: str = Header("anon")):
+    """Распознать фразу для задания «скажи вслух»."""
+    import base64
+    take(x_device[:64], "stt", TALK_PER_DAY * 2)
+    data = base64.b64decode(payload.get("audio_b64") or "")
+    if len(data) < 800: return {"text": ""}
+    expect = lat(str(payload.get("expect", ""))[:200])
+    return {"text": await stt(data, "rec." + str(payload.get("ext", "m4a"))[:5], prompt=expect)}
 
 WORLDS = {"dragons": "a friendly dragon and a castle", "space": "a rocket trip to the Moon above Belgrade",
           "sea": "an underwater adventure in the Danube with fish", "forest": "talking animals in a magical forest",
@@ -298,6 +318,7 @@ async def cleanup():
         now = time.time()
         for f in MEDIA.glob("*.mp3"):
             try:
+                if f.name.startswith("c_"): continue
                 keep = 60 if f.name.startswith("s_") else 3
                 if f.stat().st_mtime < now - keep * 86400: f.unlink()
             except Exception: pass

@@ -8,6 +8,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { preloadSfx } from '../src/sfx';
 import { StoreProvider, useStore } from '../src/store';
 import { C } from '../src/theme';
 
@@ -18,12 +19,14 @@ function Root() {
   const { ready } = useStore();
   const [fonts] = useFonts({ Alegreya_700Bold, Alegreya_800ExtraBold, Nunito_500Medium, Nunito_700Bold, Nunito_800ExtraBold });
   useEffect(() => { if (ready && fonts) SplashScreen.hideAsync().catch(() => {}); }, [ready, fonts]);
+  useEffect(() => { preloadSfx(); }, []);
   if (!ready || !fonts) return null;
   return (
     <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.paper }, animation: 'slide_from_right', gestureEnabled: true }}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="lesson/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="story/writing" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack>

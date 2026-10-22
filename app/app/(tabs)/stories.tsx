@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { likeList, worldName } from '../../src/i18n';
 import { useStore } from '../../src/store';
 import { C, F, IMG, R, shadow } from '../../src/theme';
-import { Button, Chip, H1, H2, Header, P, Press } from '../../src/ui';
+import { Button, Chip, H1, H2, P, Press } from '../../src/ui';
 
 const WORLDS: { id: 'dragons' | 'space' | 'sea' | 'forest'; img: any; tint?: string }[] = [
   { id: 'dragons', img: IMG.book }, { id: 'space', img: IMG.space }, { id: 'sea', img: null, tint: '#2F6F86' }, { id: 'forest', img: null, tint: '#5E7F3C' },
@@ -32,7 +32,7 @@ export default function StoryHome() {
   };
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
-      <Header />
+      <View style={{ height: ins.top + 14 }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: ins.bottom + 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <H1>{t('newStory')}</H1>

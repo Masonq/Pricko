@@ -8,14 +8,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SCENARIOS } from '../../src/scenarios';
 import { useStore } from '../../src/store';
 import { C, F, IMG, R, shadow } from '../../src/theme';
-import { H1, Header, P, Press } from '../../src/ui';
+import { H1, P, Press } from '../../src/ui';
 
 export default function Places() {
   const { t, lang } = useStore();
   const ins = useSafeAreaInsets();
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
-      <Header />
+      <View style={{ height: ins.top + 14 }} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: ins.bottom + 30 }} showsVerticalScrollIndicator={false}>
         <H1>{t('pickPlace')}</H1>
         <P style={{ marginTop: 6, marginBottom: 18 }}>{t('pickPlaceSub')}</P>

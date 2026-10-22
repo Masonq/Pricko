@@ -50,6 +50,19 @@ CYR = dict(zip("абвгдђежзијклљмнњопрстћуфхцчџшАБ
 CYR.update({"й": "j", "Й": "J", "ы": "i", "э": "e", "Э": "E", "ю": "ju", "Ю": "Ju", "я": "ja", "Я": "Ja", "ё": "jo", "щ": "šč", "ъ": "", "ь": ""})
 def lat(s: str) -> str: return "".join(CYR.get(ch, ch) for ch in s or "")
 
+# латиница → кириллица для озвучки: сербский голос Microsoft читает латиницу с «английским» произношением
+_L2C = [("dž", "џ"), ("Dž", "Џ"), ("DŽ", "Џ"), ("lj", "љ"), ("Lj", "Љ"), ("LJ", "Љ"), ("nj", "њ"), ("Nj", "Њ"), ("NJ", "Њ")]
+_L1 = dict(zip("abvgdđežzijklmnoprstćufhcčšABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ", "абвгдђежзијклмнопрстћуфхцчшАБВГДЂЕЖЗИЈКЛМНОПРСТЋУФХЦЧШ"))
+_KEEP_LATIN = re.compile(r"\b(?:[A-Z]{2,}|\w*[qwxy]\w*)\b", re.I)
+def cyr(text: str) -> str:
+    out = []
+    for part in re.split(r"(\s+)", text or ""):
+        if _KEEP_LATIN.fullmatch(part.strip(".,!?;:\"'()")) and part.strip():
+            out.append(part); continue
+        for a, b in _L2C: part = part.replace(a, b)
+        out.append("".join(_L1.get(ch, ch) for ch in part))
+    return "".join(out)
+
 # ---------- ИИ: каскад провайдеров (список моделей берётся у провайдеров, мёртвые пропускаются) ----------
 GROQ_PREF = ["openai/gpt-oss-120b", "moonshotai/kimi-k2-instruct-0905", "moonshotai/kimi-k2-instruct", "qwen/qwen3-32b",
              "meta-llama/llama-4-maverick-17b-128e-instruct", "openai/gpt-oss-20b", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.3-70b-versatile"]
@@ -132,7 +145,7 @@ async def tts(text: str, voice: str, rate: str = "+0%", prefix: str = "t_") -> O
     """Озвучка: голос Microsoft (edge-tts), запасной — Google (gTTS)."""
     name = f"{prefix}{uuid.uuid4().hex}.mp3"; path = MEDIA / name; t0 = time.time()
     try:
-        await edge_tts.Communicate(text, voice, rate=rate).save(str(path))
+        await edge_tts.Communicate(cyr(text), voice, rate=rate).save(str(path))
         if path.stat().st_size < 500: raise RuntimeError("empty audio")
         event("tts", voice, True, int((time.time()-t0)*1000)); return f"/media/{name}"
     except Exception as e:
@@ -140,7 +153,7 @@ async def tts(text: str, voice: str, rate: str = "+0%", prefix: str = "t_") -> O
     t0 = time.time()
     try:
         from gtts import gTTS
-        await asyncio.to_thread(lambda: gTTS(text, lang="sr", slow=rate.startswith("-1")).save(str(path)))
+        await asyncio.to_thread(lambda: gTTS(cyr(text), lang="sr", slow=rate.startswith("-1")).save(str(path)))
         event("tts", "gtts", True, int((time.time()-t0)*1000)); return f"/media/{name}"
     except Exception as e:
         event("tts", "gtts", False, int((time.time()-t0)*1000), str(e)); log.warning("tts gtts: %s", e); return None

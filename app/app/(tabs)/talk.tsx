@@ -17,8 +17,10 @@ export default function Places() {
     <View style={{ flex: 1, backgroundColor: C.paper }}>
       <View style={{ height: ins.top + 14 }} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: ins.bottom + 30 }} showsVerticalScrollIndicator={false}>
-        <H1>{t('pickPlace')}</H1>
-        <P style={{ marginTop: 6, marginBottom: 18 }}>{t('pickPlaceSub')}</P>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ flex: 1 }}><H1>{t('pickPlace')}</H1><P style={{ marginTop: 4 }}>{t('pickPlaceSub')}</P></View>
+          <Image source={IMG.wave} style={{ width: 70, height: 72 }} contentFit="contain" />
+        </View>
         <View style={s.grid}>
           {SCENARIOS.map((sc, i) => (
             <Animated.View key={sc.id} entering={FadeInDown.delay(60 * i).springify().damping(16)} style={s.cell}>
@@ -44,7 +46,7 @@ export default function Places() {
 const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
   cell: { width: '50%', padding: 6 },
-  card: { aspectRatio: 0.74, borderRadius: R.m, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: C.paper2 },
+  card: { aspectRatio: 0.74, borderRadius: 20, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: C.paper2, borderBottomWidth: 5, borderBottomColor: 'rgba(0,0,0,0.25)' },
   title: { fontFamily: F.display, fontSize: 23, color: '#FFF4E0' },
   goal: { fontFamily: F.bodyBold, fontSize: 12.5, lineHeight: 16, color: 'rgba(255,244,224,0.85)', marginTop: 2 },
 });

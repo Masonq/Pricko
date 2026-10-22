@@ -14,7 +14,7 @@ export const shadow = (h = 10) => ({ shadowColor: C.shadow, shadowOpacity: 0.08,
 export const IMG = {
   pricko: require('../assets/img/pricko.png'), bakery: require('../assets/img/bakeryV.jpg'), taxi: require('../assets/img/taxi.jpg'),
   pijaca: require('../assets/img/pijaca.jpg'), kafana: require('../assets/img/kafana.jpg'), doctor: require('../assets/img/doctor.jpg'),
-  book: require('../assets/img/book.jpg'), space: require('../assets/img/space.jpg'), bed: require('../assets/img/bedW.jpg'),
+  book: require('../assets/img/book.jpg'), space: require('../assets/img/space.jpg'), sea: require('../assets/img/sea.jpg'), forest: require('../assets/img/forest.jpg'), bed: require('../assets/img/bedW.jpg'),
   happy: require('../assets/img/p-happy.png'), sad: require('../assets/img/p-sad.png'), think: require('../assets/img/p-think.png'), wave: require('../assets/img/p-wave.png'),
   burek: require('../assets/img/burek.png'), coffee: require('../assets/img/coffee.png'),
 };
@@ -23,3 +23,4 @@ export const ICON = {
   crown: require('../assets/ui/i-crown.png'), lock: require('../assets/ui/i-lock.png'), check: require('../assets/ui/i-check.png'),
   chest: require('../assets/ui/i-chest.png'), speaker: require('../assets/ui/i-speaker.png'), mic: require('../assets/ui/i-mic.png'),
 };
+export const WORLD_IMG: Record<string, any> = { dragons: IMG.book, space: IMG.space, sea: IMG.sea, forest: IMG.forest };

@@ -8,10 +8,10 @@ import Animated, { FadeInDown, interpolate, useAnimatedScrollHandler, useAnimate
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaUrl } from '../../src/api';
 import { useStore } from '../../src/store';
-import { C, F, IMG, R, shadow } from '../../src/theme';
+import { C, F, IMG, R, shadow, WORLD_IMG } from '../../src/theme';
 import { Header, Press } from '../../src/ui';
 
-const HERO = 340;
+const HERO = 380;
 export default function Reader() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, stories, removeStory } = useStore();
@@ -31,13 +31,18 @@ export default function Reader() {
     <View style={{ flex: 1, backgroundColor: C.paper }}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: ins.bottom + 120 }} showsVerticalScrollIndicator={false}>
         <Animated.View style={[{ height: HERO, overflow: 'hidden' }, heroA]}>
-          <Image source={st.world === 'space' ? IMG.space : IMG.book} style={StyleSheet.absoluteFill} contentFit="cover" />
-          <LinearGradient colors={['rgba(255,244,224,0)', C.paper]} start={{ x: 0, y: 0.55 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+          <Image source={WORLD_IMG[st.world] ?? IMG.book} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <LinearGradient colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0)', 'rgba(15,10,30,0.82)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+          <View style={s.heroText}>
+            <Text style={s.kicker}>{st.name}</Text>
+            <Animated.Text entering={FadeInDown.springify().damping(16)} style={s.title}>{st.title}</Animated.Text>
+          </View>
         </Animated.View>
-        <View style={{ paddingHorizontal: 22, marginTop: -40 }}>
-          <Animated.Text entering={FadeInDown.springify().damping(16)} style={s.title}>{st.title}</Animated.Text>
+        <View style={s.sheet}>
           {st.paragraphs.map((p, i) => (
-            <Animated.Text key={i} entering={FadeInDown.delay(120 + i * 70).springify().damping(18)} style={s.p}>{p}</Animated.Text>
+            <Animated.Text key={i} entering={FadeInDown.delay(120 + i * 70).springify().damping(18)} style={s.p}>
+              {i === 0 ? <Text style={s.cap}>{p.charAt(0)}</Text> : null}{i === 0 ? p.slice(1) : p}
+            </Animated.Text>
           ))}
           {st.words?.length > 0 && (
             <Animated.View entering={FadeInDown.delay(300)} style={[s.words, shadow(6)]}>
@@ -52,7 +57,9 @@ export default function Reader() {
           </Press>
         </View>
       </Animated.ScrollView>
-      <View style={[s.top, { paddingTop: 0 }]} pointerEvents="box-none"><Header /></View>
+      <View style={[s.top, { top: ins.top + 6 }]} pointerEvents="box-none">
+        <Press onPress={() => router.back()} style={s.back}><Image source={require('../../assets/ui/back.png')} tintColor="#FFFFFF" style={{ width: 18, height: 18 }} /></Press>
+      </View>
       {mediaUrl(st.audio) && (
         <View style={[s.player, shadow(14), { bottom: ins.bottom + 14 }]}>
           <Press onPress={toggle} style={s.play} scale={0.9}>
@@ -68,8 +75,13 @@ export default function Reader() {
   );
 }
 const s = StyleSheet.create({
-  top: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: 'transparent' },
-  title: { fontFamily: F.serif, fontSize: 34, lineHeight: 38, color: C.ink, marginBottom: 14 },
+  top: { position: 'absolute', left: 16 },
+  back: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  heroText: { position: 'absolute', left: 22, right: 22, bottom: 44 },
+  kicker: { fontFamily: F.bodyHeavy, fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5 },
+  title: { fontFamily: F.serif, fontSize: 34, lineHeight: 38, color: '#FFFFFF', marginTop: 2 },
+  sheet: { marginTop: -28, backgroundColor: C.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 22, paddingTop: 26 },
+  cap: { fontFamily: F.serif, fontSize: 44, lineHeight: 44, color: C.blue },
   p: { fontFamily: 'Alegreya_700Bold', fontSize: 21, lineHeight: 31, color: C.ink, marginBottom: 14 },
   words: { backgroundColor: C.card, borderRadius: R.m, padding: 16, marginTop: 10 },
   wordsT: { fontFamily: F.bodyHeavy, fontSize: 14, color: C.ochre, marginBottom: 6 },

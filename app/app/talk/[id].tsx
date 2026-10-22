@@ -10,7 +10,9 @@ import { ApiError, mediaUrl, say, talk } from '../../src/api';
 import { SCENARIOS } from '../../src/scenarios';
 import { useStore } from '../../src/store';
 import { C, F, IMG, R, shadow } from '../../src/theme';
-import { Header, Press } from '../../src/ui';
+import { Press } from '../../src/ui';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; tr?: string; audio?: string | null; fix?: { wrong: string; right: string; why: string } | null; pending?: boolean };
 const uid = () => Math.random().toString(36).slice(2);
@@ -126,8 +128,17 @@ export default function Talk() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
-      <Header title={sc.title[lang]} right={<Press onPress={() => setTyping(v => !v)} style={s.kbd}>{typing ? <View style={{ alignItems: 'center' }}><View style={[s.micHead, { width: 9, height: 14, backgroundColor: C.ink }]} /><View style={[s.micBase, { width: 10, height: 2, backgroundColor: C.ink, marginTop: 2 }]} /></View> : <Text style={s.kbdText}>Aa</Text>}</Press>} />
-      <View style={s.goal}><Text style={s.goalLabel}>{t('goal')}</Text><Text style={s.goalText}>{sc.goal[lang]}</Text></View>
+      <View style={[s.hero, { paddingTop: ins.top }]}>
+        {sc.img ? <Image source={sc.img} style={StyleSheet.absoluteFill} contentFit="cover" /> : <View style={[StyleSheet.absoluteFill, { backgroundColor: C.ochre }]} />}
+        <LinearGradient colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']} style={StyleSheet.absoluteFill} />
+        <View style={[s.heroTop, { top: ins.top + 6 }]}>
+          <Press onPress={() => router.back()} style={s.glass}><Image source={require('../../assets/ui/back.png')} tintColor="#FFFFFF" style={{ width: 18, height: 18 }} /></Press>
+          <Press onPress={() => setTyping(v => !v)} style={s.glass}>{typing ? <View style={{ alignItems: 'center' }}><View style={[s.micHead, { width: 9, height: 14 }]} /><View style={[s.micBase, { width: 10, height: 2, marginTop: 2 }]} /></View> : <Text style={[s.kbdText, { color: '#FFFFFF' }]}>Aa</Text>}</Press>
+        </View>
+        <Text style={s.heroT}>{sc.title[lang]}</Text>
+        <View style={s.goalChip}><Text style={s.goalLabel}>{t('goal')}</Text><Text style={s.goalText} numberOfLines={1}>{sc.goal[lang]}</Text></View>
+      </View>
+      <View style={{ display: 'none' }}><Press onPress={() => setTyping(v => !v)} style={s.kbd}>{typing ? <View style={{ alignItems: 'center' }}><View style={[s.micHead, { width: 9, height: 14, backgroundColor: C.ink }]} /><View style={[s.micBase, { width: 10, height: 2, backgroundColor: C.ink, marginTop: 2 }]} /></View> : <Text style={s.kbdText}>Aa</Text>}</Press></View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
           {msgs.map(m => (
@@ -192,6 +203,11 @@ export default function Talk() {
 }
 
 const s = StyleSheet.create({
+  hero: { height: 210, justifyContent: 'flex-end', paddingHorizontal: 16, paddingBottom: 14, overflow: 'hidden' },
+  heroTop: { position: 'absolute', left: 16, right: 16, top: 0, flexDirection: 'row', justifyContent: 'space-between' },
+  glass: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  heroT: { fontFamily: F.display, fontSize: 30, color: '#FFFFFF' },
+  goalChip: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, maxWidth: '100%' },
   kbd: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
   kbdText: { fontFamily: F.bodyHeavy, fontSize: 15, color: C.ink },
   goal: { marginHorizontal: 16, marginTop: 2, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.ochreSoft, borderWidth: 2, borderColor: '#FFE38A', flexDirection: 'row', alignItems: 'center', gap: 8 },

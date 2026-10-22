@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { File } from 'expo-file-system';
 export const API: string = (Constants.expoConfig?.extra as any)?.api ?? 'http://89.208.113.147:8077';
 export class ApiError extends Error { constructor(public code: 'busy' | 'limit' | 'offline' | 'empty', msg: string = code) { super(msg); } }
+let VOICE: 'f' | 'm' = 'f';
+export function setApiVoice(v: 'f' | 'm') { VOICE = v; }
 export const mediaUrl = (u: string | null | undefined) => (u ? (u.startsWith('http') ? u : API + u) : null);
 
 async function req(path: string, init: RequestInit, device: string, timeout = 60000) {
@@ -27,15 +29,15 @@ export async function talk(device: string, a: { scenario: string; history: { rol
     try { audio_b64 = await new File(uri).base64(); } catch (e) { throw new ApiError('empty', 'read: ' + String((e as any)?.message ?? e)); }
     if (!audio_b64) throw new ApiError('empty', 'read: empty');
   }
-  return req('/api/talk2', { method: 'POST', body: JSON.stringify({ scenario: a.scenario, history: a.history, ui: a.ui, text: a.text || '', audio_b64, ext }),
+  return req('/api/talk2', { method: 'POST', body: JSON.stringify({ scenario: a.scenario, history: a.history, ui: a.ui, text: a.text || '', audio_b64, ext, voice: VOICE }),
     headers: { 'Content-Type': 'application/json' } }, device) as Promise<TalkReply>;
 }
-export const say = (device: string, text: string, slow = false) => req('/api/say', { method: 'POST', body: JSON.stringify({ text, slow }), headers: { 'Content-Type': 'application/json' } }, device, 20000) as Promise<{ audio: string | null }>;
-export const makeStory = (device: string, body: object) => req('/api/story', { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }, device, 90000);
+export const say = (device: string, text: string, slow = false) => req('/api/say', { method: 'POST', body: JSON.stringify({ text, slow, voice: VOICE }), headers: { 'Content-Type': 'application/json' } }, device, 20000) as Promise<{ audio: string | null }>;
+export const makeStory = (device: string, body: object) => req('/api/story', { method: 'POST', body: JSON.stringify({ ...body, voice: VOICE }), headers: { 'Content-Type': 'application/json' } }, device, 90000);
 
 const sayCache = new Map<string, string>();
 export async function sayCached(device: string, text: string, slow = false) {
-  const k = (slow ? 's|' : 'n|') + text; const c = sayCache.get(k); if (c) return c;
+  const k = VOICE + (slow ? 's|' : 'n|') + text; const c = sayCache.get(k); if (c) return c;
   const r = await say(device, text, slow); if (r.audio) sayCache.set(k, r.audio); return r.audio;
 }
 export async function sttCheck(device: string, audioUri: string, expect: string): Promise<string> {

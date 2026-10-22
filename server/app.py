@@ -17,6 +17,8 @@ TALK_PER_DAY = int(os.getenv("TALK_PER_DAY", "150"))
 STORY_PER_DAY = int(os.getenv("STORY_PER_DAY", "8"))
 VOICE_TALK = "sr-RS-SophieNeural"
 VOICE_STORY = "sr-RS-SophieNeural"
+VOICES = {"f": "sr-RS-SophieNeural", "m": "sr-RS-NicholasNeural"}
+def pick_voice(v) -> str: return VOICES.get(str(v or "f"), VOICE_TALK)
 log = logging.getLogger("pricko"); logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # ---------- база ----------
@@ -206,7 +208,7 @@ async def scenarios():
 async def talk(scenario: str = Form(...), history: str = Form("[]"), ui: str = Form("ru"), text: str = Form(""),
                audio: Optional[UploadFile] = File(None), x_device: str = Header("anon")):
     data = await audio.read() if audio is not None else None
-    return await _talk(scenario, history, ui, text, data, (audio.filename if audio else None) or "rec.m4a", x_device)
+    return await _talk(scenario, history, ui, text, data, (audio.filename if audio else None) or "rec.m4a", x_device, "f")
 
 @app.post("/api/talk2")
 async def talk2(payload: dict, x_device: str = Header("anon")):
@@ -216,9 +218,9 @@ async def talk2(payload: dict, x_device: str = Header("anon")):
     data = base64.b64decode(b64) if b64 else None
     hist = payload.get("history", [])
     return await _talk(str(payload.get("scenario", "")), json.dumps(hist if isinstance(hist, list) else []), str(payload.get("ui", "ru")),
-                       str(payload.get("text", "")), data, "rec." + str(payload.get("ext", "m4a"))[:5], x_device)
+                       str(payload.get("text", "")), data, "rec." + str(payload.get("ext", "m4a"))[:5], x_device, payload.get("voice"))
 
-async def _talk(scenario, history, ui, text, data, filename, x_device):
+async def _talk(scenario, history, ui, text, data, filename, x_device, voice=None):
     sc = SCENARIOS.get(scenario)
     if not sc: raise HTTPException(404, "scenario")
     ui = ui if ui in LANGNAME else "ru"
@@ -241,7 +243,7 @@ async def _talk(scenario, history, ui, text, data, filename, x_device):
     corr = out.get("correction") if isinstance(out.get("correction"), dict) else None
     if corr and not (corr.get("wrong") and corr.get("right")): corr = None
     if corr: corr = {"wrong": lat(corr["wrong"]), "right": lat(corr["right"]), "why": str(corr.get("why", ""))}
-    url = await tts(reply, VOICE_TALK, "-8%")
+    url = await tts(reply, pick_voice(voice), "-8%")
     return {"heard": heard, "reply": reply, "translation": "" if ui == "sr" else str(out.get("translation", "")),
             "correction": corr, "hint": lat(str(out.get("hint", ""))), "done": bool(out.get("done")), "audio": url}
 
@@ -253,10 +255,11 @@ async def say(payload: dict):
     if not t: raise HTTPException(400, "text")
     slow = bool(payload.get("slow"))
     rate = "-40%" if slow else "-15%"
-    key = hashlib.sha1(f"{t}|{rate}|{VOICE_TALK}".encode()).hexdigest()[:20]
+    voice = pick_voice(payload.get("voice"))
+    key = hashlib.sha1(f"{t}|{rate}|{voice}".encode()).hexdigest()[:20]
     f = MEDIA / f"c_{key}.mp3"
     if f.exists() and f.stat().st_size > 500: return {"audio": f"/media/{f.name}"}
-    url = await tts(t, VOICE_TALK, rate, "tmp_")
+    url = await tts(t, voice, rate, "tmp_")
     if not url: return {"audio": None}
     (MEDIA / url.split("/")[-1]).replace(f)
     return {"audio": f"/media/{f.name}"}
@@ -295,7 +298,7 @@ Answer ONLY as JSON: {{"title": str, "paragraphs": [str], "words": [{{"sr": str,
     paras = [lat(str(p).strip()) for p in out.get("paragraphs", []) if str(p).strip()][:9]
     if len(paras) < 3: raise HTTPException(503, "ai_busy")
     title = lat(str(out.get("title", f"Priča za {name}")))
-    url = await tts(title + ". " + " ".join(paras), VOICE_STORY, "-12%", "s_")
+    url = await tts(title + ". " + " ".join(paras), pick_voice(payload.get("voice")), "-12%", "s_")
     sid = uuid.uuid4().hex[:12]
     data = {"id": sid, "title": title, "paragraphs": paras, "words": out.get("words", [])[:6], "audio": url,
             "name": name, "world": payload.get("world", "dragons"), "created": int(time.time())}

@@ -39,6 +39,14 @@ export default function Path() {
         <Press onPress={() => router.push('/settings')} style={s.more}><View style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map(i => <View key={i} style={s.dot} />)}</View></Press>
       </View>
       <ScrollView contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
+        {(progress.mistakes?.length ?? 0) >= 3 && (
+          <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
+            <Btn3D onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: 'practice' } }); }} border={C.line} shade={C.line} radius={16} faceStyle={s.practice}>
+              <Image source={IMG.think} style={{ width: 54, height: 60 }} contentFit="contain" />
+              <View style={{ flex: 1 }}><Text style={s.practiceT}>{t('practice')} ({progress.mistakes.length})</Text><Text style={s.practiceS}>{t('practiceSub')}</Text></View>
+            </Btn3D>
+          </Animated.View>
+        )}
         {COURSE.map((u, ui) => {
           const unitDone = u.lessons.every(l => progress.done[l.id]);
           return (
@@ -98,5 +106,8 @@ const s = StyleSheet.create({
   tip: { backgroundColor: C.card, borderRadius: 12, borderWidth: 2, borderColor: C.line, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 10, alignItems: 'center' },
   tipT: { fontFamily: F.display, fontSize: 15, letterSpacing: 0.5 },
   tipArrow: { position: 'absolute', bottom: -8, width: 14, height: 14, backgroundColor: C.card, borderRightWidth: 2, borderBottomWidth: 2, borderColor: C.line, transform: [{ rotate: '45deg' }] },
+  practice: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, justifyContent: 'flex-start' },
+  practiceT: { fontFamily: F.display, fontSize: 17, color: C.ink },
+  practiceS: { fontFamily: F.bodyBold, fontSize: 13.5, color: C.soft, marginTop: 1 },
   pose: { position: 'absolute', top: 70, width: 110, height: 120 },
 });

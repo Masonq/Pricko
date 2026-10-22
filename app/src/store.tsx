@@ -4,8 +4,8 @@ import { setApiVoice } from './api';
 import { defaultLang, Key, Lang, t as tr } from './i18n';
 
 export type Story = { id: string; title: string; paragraphs: string[]; words: { sr: string; tr: string }[]; audio: string | null; name: string; world: string; created: number };
-export type Progress = { done: Record<string, number>; xp: number; streak: number; last: string };
-type State = { voice: 'f' | 'm'; setVoice: (v: 'f' | 'm') => void; progress: Progress; finishLesson: (id: string, xp: number, acc: number) => void; ready: boolean; lang: Lang; setLang: (l: Lang) => void; showTr: boolean; setShowTr: (v: boolean) => void;
+export type Progress = { done: Record<string, number>; xp: number; streak: number; last: string; mistakes: string[] };
+type State = { addMistake: (k: string) => void; clearMistakes: (ks: string[]) => void; voice: 'f' | 'm'; setVoice: (v: 'f' | 'm') => void; progress: Progress; finishLesson: (id: string, xp: number, acc: number) => void; ready: boolean; lang: Lang; setLang: (l: Lang) => void; showTr: boolean; setShowTr: (v: boolean) => void;
   device: string; stories: Story[]; addStory: (s: Story) => void; removeStory: (id: string) => void; t: (k: Key) => string };
 const Ctx = createContext<State | null>(null);
 const rid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -17,12 +17,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [voice, setVoiceS] = useState<'f' | 'm'>('f');
   const [device, setDevice] = useState('anon');
   const [stories, setStories] = useState<Story[]>([]);
-  const [progress, setProgress] = useState<Progress>({ done: {}, xp: 0, streak: 0, last: '' });
+  const [progress, setProgress] = useState<Progress>({ done: {}, xp: 0, streak: 0, last: '', mistakes: [] });
   useEffect(() => { (async () => {
     try {
       const [l, s, d, st, pr, vo] = await Promise.all(['lang', 'showTr', 'device', 'stories', 'progress', 'voice'].map(k => AsyncStorage.getItem('pricko.' + k)));
       if (vo === 'm' || vo === 'f') { setVoiceS(vo); setApiVoice(vo); }
-      if (pr) setProgress(p => ({ ...p, ...JSON.parse(pr) }));
+      if (pr) setProgress(p => ({ ...p, mistakes: [], ...JSON.parse(pr) }));
       if (l === 'sr' || l === 'ru' || l === 'en') setLangS(l);
       if (s !== null) setShowTrS(s === '1');
       if (d) setDevice(d); else { const n = rid(); setDevice(n); AsyncStorage.setItem('pricko.device', n); }
@@ -40,11 +40,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const today = new Date().toISOString().slice(0, 10);
     const y = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     const streak = p.last === today ? p.streak : p.last === y ? p.streak + 1 : 1;
-    const n = { done: { ...p.done, [id]: Math.max(p.done[id] ?? 0, acc) }, xp: p.xp + xp, streak, last: today };
+    const n = { ...p, done: id === 'practice' ? p.done : { ...p.done, [id]: Math.max(p.done[id] ?? 0, acc) }, xp: p.xp + xp, streak, last: today };
     AsyncStorage.setItem('pricko.progress', JSON.stringify(n)); return n;
   }), []);
-  const value = useMemo(() => ({ voice, setVoice, progress, finishLesson, ready, lang, setLang, showTr, setShowTr, device, stories, addStory, removeStory, t: (k: Key) => tr(lang, k) }),
-    [voice, setVoice, progress, finishLesson, ready, lang, showTr, device, stories, setLang, setShowTr, addStory, removeStory]);
+  const addMistake = useCallback((k: string) => setProgress(p => { if (p.mistakes?.includes(k)) return p; const n = { ...p, mistakes: [k, ...(p.mistakes || [])].slice(0, 40) }; AsyncStorage.setItem('pricko.progress', JSON.stringify(n)); return n; }), []);
+  const clearMistakes = useCallback((ks: string[]) => setProgress(p => { const n = { ...p, mistakes: (p.mistakes || []).filter(k => !ks.includes(k)) }; AsyncStorage.setItem('pricko.progress', JSON.stringify(n)); return n; }), []);
+  const value = useMemo(() => ({ addMistake, clearMistakes, voice, setVoice, progress, finishLesson, ready, lang, setLang, showTr, setShowTr, device, stories, addStory, removeStory, t: (k: Key) => tr(lang, k) }),
+    [addMistake, clearMistakes, voice, setVoice, progress, finishLesson, ready, lang, showTr, device, stories, setLang, setShowTr, addStory, removeStory]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export function useStore() { const v = useContext(Ctx); if (!v) throw new Error('store'); return v; }

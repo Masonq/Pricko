@@ -136,7 +136,7 @@ export default function Talk() {
                 {m.role === 'assistant' && <Image source={IMG.pricko} style={s.ava} contentFit="contain" />}
                 <Press haptic={false} scale={0.98} onPress={() => { if (m.role === 'assistant') { play(m.audio); setOpenTr(o => ({ ...o, [m.id]: !o[m.id] })); } }}
                   style={[s.bubble, m.role === 'user' ? s.me : s.bot]}>
-                  <Text style={[s.msg, m.role === 'user' && { color: '#FFF4E0' }, m.pending && { opacity: 0.6 }]}>{m.text}</Text>
+                  <Text style={[s.msg, m.role === 'user' && { color: '#FFFFFF' }, m.pending && { opacity: 0.6 }]}>{m.text}</Text>
                   {m.role === 'assistant' && !!m.tr && (showTr || openTr[m.id]) && <Text style={s.tr}>{m.tr}</Text>}
                 </Press>
               </View>
@@ -194,41 +194,41 @@ export default function Talk() {
 const s = StyleSheet.create({
   kbd: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
   kbdText: { fontFamily: F.bodyHeavy, fontSize: 15, color: C.ink },
-  goal: { marginHorizontal: 16, marginTop: 2, paddingVertical: 9, paddingHorizontal: 14, borderRadius: R.s, backgroundColor: C.ochreSoft, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  goalLabel: { fontFamily: F.bodyHeavy, fontSize: 12, color: C.ochre, textTransform: 'none' },
+  goal: { marginHorizontal: 16, marginTop: 2, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.ochreSoft, borderWidth: 2, borderColor: '#FFE38A', flexDirection: 'row', alignItems: 'center', gap: 8 },
+  goalLabel: { fontFamily: F.display, fontSize: 12.5, color: '#E5A500' },
   goalText: { fontFamily: F.bodyBold, fontSize: 14, color: C.ink, flex: 1 },
   ava: { width: 34, height: 40, marginBottom: 2 },
   bubble: { paddingVertical: 11, paddingHorizontal: 14, borderRadius: 20, flexShrink: 1 },
-  bot: { backgroundColor: C.card, borderBottomLeftRadius: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  me: { backgroundColor: C.indigo, borderBottomRightRadius: 6 },
+  bot: { backgroundColor: C.card, borderBottomLeftRadius: 6, borderWidth: 2, borderColor: C.line },
+  me: { backgroundColor: C.blue, borderBottomRightRadius: 6 },
   msg: { fontFamily: F.bodyBold, fontSize: 17, lineHeight: 23, color: C.ink },
   tr: { fontFamily: F.body, fontSize: 14, lineHeight: 19, color: C.soft, marginTop: 4 },
-  fix: { marginTop: 6, maxWidth: '88%', backgroundColor: C.ochreSoft, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12 },
+  fix: { marginTop: 6, maxWidth: '88%', backgroundColor: C.greenSoft, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12 },
   fixLine: { fontFamily: F.bodyBold, fontSize: 15, color: C.ink },
   wrong: { color: C.red, textDecorationLine: 'line-through' }, right: { color: C.green },
   why: { fontFamily: F.body, fontSize: 13, color: C.soft, marginTop: 2 },
   thinking: { alignSelf: 'flex-start', marginLeft: 42, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 16, backgroundColor: C.card },
   thinkingText: { fontFamily: F.bodyBold, fontSize: 14, color: C.soft },
-  done: { marginTop: 6, backgroundColor: C.indigo, borderRadius: R.m, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  done: { marginTop: 6, backgroundColor: C.green, borderRadius: R.m, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   doneText: { fontFamily: F.display, fontSize: 21, color: '#FFF4E0', flex: 1 },
   again: { backgroundColor: '#FFF4E0', paddingHorizontal: 14, height: 38, borderRadius: R.pill, justifyContent: 'center' },
   againText: { fontFamily: F.bodyHeavy, fontSize: 14, color: C.indigo },
   hintWrap: { paddingHorizontal: 16, paddingBottom: 8 },
-  hint: { backgroundColor: C.indigoSoft, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
-  hintLabel: { fontFamily: F.bodyHeavy, fontSize: 11.5, color: C.indigo },
+  hint: { backgroundColor: C.blueSoft, borderRadius: 16, borderWidth: 2, borderColor: C.blueLine, paddingHorizontal: 14, paddingVertical: 9 },
+  hintLabel: { fontFamily: F.display, fontSize: 12, color: C.blueShade },
   hintText: { fontFamily: F.bodyBold, fontSize: 15.5, color: C.ink, marginTop: 1 },
   note: { textAlign: 'center', fontFamily: F.bodyBold, fontSize: 14, color: C.red, paddingBottom: 6, paddingHorizontal: 20 },
-  bar: { paddingTop: 10, paddingHorizontal: 16, backgroundColor: C.paper, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line },
+  bar: { paddingTop: 10, paddingHorizontal: 16, backgroundColor: C.paper, borderTopWidth: 2, borderTopColor: C.line },
   micWrap: { width: 96, height: 96, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', width: 84, height: 84, borderRadius: 42, backgroundColor: C.red },
-  mic: { width: 84, height: 84, borderRadius: 42, backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center' },
+  mic: { width: 84, height: 84, borderRadius: 42, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 6, borderBottomColor: C.blueShade },
   micIcon: { alignItems: 'center' },
   micHead: { width: 18, height: 28, borderRadius: 9, backgroundColor: '#FFF4E0' },
   micStem: { width: 3, height: 7, backgroundColor: '#FFF4E0', marginTop: 3 },
   micBase: { width: 18, height: 3, borderRadius: 2, backgroundColor: '#FFF4E0' },
   micLabel: { fontFamily: F.bodyHeavy, fontSize: 13, color: C.soft, marginTop: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  input: { flex: 1, height: 50, borderRadius: R.pill, backgroundColor: C.card, paddingHorizontal: 18, fontFamily: F.bodyBold, fontSize: 16, color: C.ink, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  sendBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, height: 50, borderRadius: 16, backgroundColor: C.paper2, paddingHorizontal: 16, fontFamily: F.bodyBold, fontSize: 16, color: C.ink, borderWidth: 2, borderColor: C.line },
+  sendBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
   sendText: { fontFamily: F.bodyHeavy, fontSize: 22, color: '#FFF4E0', marginTop: -2 },
 });

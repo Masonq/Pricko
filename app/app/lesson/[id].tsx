@@ -231,10 +231,22 @@ function Pairs({ ex, lang, done }: { ex: Extract<Ex, { t: 'pairs' }>; lang: Lang
 // ---------- урок ----------
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, lang, device, progress, finishLesson } = useStore();
+  const { t, lang, device, progress, finishLesson, addMistake, clearMistakes } = useStore();
   speakDevice = device;
   const ins = useSafeAreaInsets();
-  const lesson = allLessons.find(l => l.id === id) ?? allLessons[0];
+  const practice = id === 'practice';
+  const lesson = useMemo(() => {
+    if (!practice) return allLessons.find(l => l.id === id) ?? allLessons[0];
+    const ex: Ex[] = []; const keys: string[] = [];
+    for (const k of shuffle(progress.mistakes || [])) {
+      const [lid, i] = k.split('#'); const l = allLessons.find(x => x.id === lid); const e = l?.ex[+i];
+      if (e && e.t !== 'pairs' && e.t !== 'speak') { ex.push(e); keys.push(k); } if (ex.length >= 10) break;
+    }
+    return { id: 'practice', ex: ex.length ? ex : allLessons[0].ex.slice(0, 6), keys, unit: allLessons[0].unit };
+  }, []);
+  const keyOf = (e: Ex) => practice ? (lesson as any).keys?.[lesson.ex.indexOf(e)] : `${lesson.id}#${lesson.ex.indexOf(e)}`;
+  const firstWrong = useRef(new Set<Ex>());
+  const newDay = useRef(progress.last !== new Date().toISOString().slice(0, 10));
   const [queue, setQueue] = useState<Ex[]>(lesson.ex);
   const [pos, setPos] = useState(0);
   const [pending, setPending] = useState<Pending>(null);
@@ -266,7 +278,7 @@ export default function LessonScreen() {
       setStats(s => ({ ...s, wrong: s.wrong + 1 }));
       heartS.value = withSequence(withTiming(1.4, { duration: 120 }), withSpring(1));
       setHearts(h => h - 1);
-      setQueue(q => [...q, ex]);
+      setQueue(q => [...q, ex]); firstWrong.current.add(ex); const k = keyOf(ex); if (k && !practice) addMistake(k);
       if (ex.t !== 'mc_ui' && ex.t !== 'tiles_sr') speak(pending.correct);
     }
   };
@@ -281,6 +293,7 @@ export default function LessonScreen() {
     sfx('complete'); setPhase('done');
     const acc = Math.round((100 * stats.right) / Math.max(1, stats.right + stats.wrong));
     finishLesson(lesson.id, 10 + (stats.wrong === 0 ? 5 : 0), acc);
+    if (practice) clearMistakes(lesson.ex.filter(e => !firstWrong.current.has(e)).map(keyOf).filter(Boolean));
   };
 
   if (phase !== 'play') {
@@ -291,6 +304,12 @@ export default function LessonScreen() {
       <View style={[st.endWrap, { paddingTop: ins.top + 30, paddingBottom: ins.bottom + 20 }]}>
         <Animated.View entering={ZoomIn.springify().damping(10)}><Image source={ok ? IMG.happy : IMG.sad} style={{ width: 220, height: 230 }} contentFit="contain" /></Animated.View>
         <Animated.Text entering={FadeInDown.delay(200)} style={[st.endT, !ok && { color: RED }]}>{ok ? t('done') : t('outOfHearts')}</Animated.Text>
+        {ok && newDay.current && (
+          <Animated.View entering={ZoomIn.delay(500).springify().damping(9)} style={st.streakUp}>
+            <Image source={ICON.flame} style={{ width: 30, height: 38 }} contentFit="contain" />
+            <Text style={st.streakUpT}>{t('streakUp')} {progress.streak}</Text>
+          </Animated.View>
+        )}
         {ok && (
           <Animated.View entering={FadeInDown.delay(350)} style={st.cards}>
             <View style={[st.card, { borderColor: '#FFC800', backgroundColor: '#FFC800' }]}><Text style={st.cardH}>{t('xp').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.star} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: '#E5A500' }]}>+{10 + (stats.wrong === 0 ? 5 : 0)}</Text></View></View>
@@ -405,4 +424,6 @@ const st = StyleSheet.create({
   cardIc: { width: 22, height: 22 },
   cardV: { fontFamily: F.display, fontSize: 21 },
   time: { fontFamily: F.bodyBold, color: C.faint, marginTop: 10 },
+  streakUp: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: '#FFF0D9', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10 },
+  streakUpT: { fontFamily: F.display, fontSize: 18, color: '#FF9600' },
 });

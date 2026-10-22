@@ -53,11 +53,11 @@ def lat(s: str) -> str: return "".join(CYR.get(ch, ch) for ch in s or "")
 # латиница → кириллица для озвучки: сербский голос Microsoft читает латиницу с «английским» произношением
 _L2C = [("dž", "џ"), ("Dž", "Џ"), ("DŽ", "Џ"), ("lj", "љ"), ("Lj", "Љ"), ("LJ", "Љ"), ("nj", "њ"), ("Nj", "Њ"), ("NJ", "Њ")]
 _L1 = dict(zip("abvgdđežzijklmnoprstćufhcčšABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ", "абвгдђежзијклмнопрстћуфхцчшАБВГДЂЕЖЗИЈКЛМНОПРСТЋУФХЦЧШ"))
-_KEEP_LATIN = re.compile(r"\b(?:[A-Z]{2,}|\w*[qwxy]\w*)\b", re.I)
+_KEEP_LATIN = re.compile(r"(?:[^\W\d_]*[qwxyQWXY][^\W\d_-]*(?:-[^\W\d_]+)*)")
 def cyr(text: str) -> str:
     out = []
     for part in re.split(r"(\s+)", text or ""):
-        if _KEEP_LATIN.fullmatch(part.strip(".,!?;:\"'()")) and part.strip():
+        if part.strip() and _KEEP_LATIN.fullmatch(part.strip(".,!?;:\"'()")):
             out.append(part); continue
         for a, b in _L2C: part = part.replace(a, b)
         out.append("".join(_L1.get(ch, ch) for ch in part))

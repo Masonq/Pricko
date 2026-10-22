@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaUrl, sayCached, sttCheck } from '../../src/api';
 import { Confetti } from '../../src/confetti';
@@ -16,7 +16,7 @@ import { useStore } from '../../src/store';
 import { C, F, ICON, IMG, R } from '../../src/theme';
 import { Btn3D, Press } from '../../src/ui';
 
-const UIIMG = { close: require('../../assets/ui/close.png'), speaker: require('../../assets/ui/speaker.png'), check: require('../../assets/ui/check.png') };
+const UIIMG = { close: require('../../assets/ui/close.png'), speaker: require('../../assets/ui/speaker.png'), check: require('../../assets/ui/check.png'), mic: require('../../assets/ui/mic.png') };
 const GREEN = '#58CC02', GREEN_D = '#58A700', GREEN_BG = '#D7FFB8', RED = '#FF4B4B', RED_D = '#EA2B2B', RED_BG = '#FFDFE0', BLUE = '#1CB0F6', BLUE_D = '#1899D6', BLUE_BG = '#DDF4FF', BLUE_L = '#84D8FF';
 type Pending = { ok: boolean; correct: string; note?: string } | null;
 
@@ -79,13 +79,13 @@ function MC({ ex, lang, set }: { ex: Extract<Ex, { wrong: W[] }>; lang: Lang; se
   useEffect(() => { if (ex.t !== 'mc_ui') setTimeout(() => speak(ex.item.sr), 250); }, [ex]);
   const correct = showSr ? ex.item.sr : ui(ex.item, lang);
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 18, flex: 1 }}>
       {ex.t === 'mc_sr' && <Character><Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.bubbleBig}>{ex.item.sr}</Text></Press></Character>}
       {ex.t === 'mc_ui' && <Character img={IMG.think}><Text style={st.bubbleBig}>{ui(ex.item, lang)}</Text></Character>}
       {ex.t === 'listen_choose' && <View style={st.listenRow}><SpeakBtn text={ex.item.sr} size={96} /><SpeakBtn text={ex.item.sr} size={64} slow /></View>}
-      <View style={st.grid}>
+      <View style={[st.grid, { marginTop: 'auto' }]}>
         {opts.map((o, i) => (
-          <View key={i} style={{ width: '50%', padding: 5 }}>
+          <View key={i} style={{ width: '50%', padding: 6 }}>
             <Option big label={showSr ? o.sr : ui(o, lang)} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); if (showSr) speak(o.sr); set({ ok: o === ex.item, correct }); }} />
           </View>
         ))}
@@ -162,14 +162,14 @@ function Fill({ ex, lang, set }: { ex: Extract<Ex, { t: 'fill' }>; lang: Lang; s
   const [a, b] = ex.item.sr.split('___');
   const full = a + ex.item.ok + b;
   return (
-    <View style={{ gap: 20 }}>
+    <View style={{ gap: 20, flex: 1 }}>
       <Text style={st.sub}>{ui(ex.item, lang)}</Text>
       <View style={st.fillLine}>
         <Text style={st.fillT}>{a}</Text>
         <View style={[st.blank, sel && { borderBottomColor: C.indigo }]}><Text style={[st.fillT, { color: C.indigo }]}>{sel ?? '      '}</Text></View>
         <Text style={st.fillT}>{b}</Text>
       </View>
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: 12, marginTop: 'auto' }}>
         {opts.map(o => <Option key={o} label={o} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); set({ ok: o === ex.item.ok, correct: full }); }} />)}
       </View>
     </View>
@@ -190,6 +190,13 @@ function ListenType({ ex, t, set }: { ex: Extract<Ex, { t: 'listen_type' }>; t: 
       <TextInput value={v} onChangeText={setV} placeholder={t('typeSr')} placeholderTextColor={C.faint} style={st.area} multiline autoCorrect={false} autoCapitalize="sentences" />
     </View>
   );
+}
+
+function Ring({ delay }: { delay: number }) {
+  const v = useSharedValue(0);
+  useEffect(() => { const tm = setTimeout(() => { v.value = withRepeat(withTiming(1, { duration: 1200 }), -1, false); }, delay); return () => clearTimeout(tm); }, []);
+  const a = useAnimatedStyle(() => ({ opacity: 0.35 * (1 - v.value), transform: [{ scale: 1 + v.value * 0.9 }] }));
+  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: 132, height: 132, borderRadius: 66, backgroundColor: RED }, a]} />;
 }
 
 function Speak({ ex, lang, t, device, set, skip }: { ex: Extract<Ex, { t: 'speak' }>; lang: Lang; t: (k: any) => string; device: string; set: (p: Pending) => void; skip: () => void }) {
@@ -221,17 +228,20 @@ function Speak({ ex, lang, t, device, set, skip }: { ex: Extract<Ex, { t: 'speak
     setState('idle');
   };
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 18, flex: 1 }}>
       <Character img={IMG.wave}>
         <Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 26, height: 22 }} contentFit="contain" /><Text style={[st.bubbleT, { flexShrink: 1 }]}>{ex.item.sr}</Text></Press>
         <Text style={st.bubbleSub}>{ui(ex.item, lang)}</Text>
       </Character>
-      <Animated.View style={[{ alignSelf: 'stretch' }, pa]}>
-        <Btn3D onPress={toggle} face={state === 'rec' ? RED : C.card} border={state === 'rec' ? RED : C.line} shade={state === 'rec' ? RED_D : C.line} radius={16} faceStyle={st.micBig}>
-          <Image source={ICON.mic} style={{ width: 30, height: 40 }} contentFit="contain" />
-          <Text style={[st.micBigT, state === 'rec' && { color: '#FFFFFF' }]}>{state === 'rec' ? t('tapToSend') : state === 'wait' ? '…' : t('tapSpeak')}</Text>
-        </Btn3D>
-      </Animated.View>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 220 }}>
+        {state === 'rec' && [0, 1, 2].map(i => <Ring key={i} delay={i * 400} />)}
+        <Animated.View style={pa}>
+          <Btn3D onPress={toggle} face={state === 'rec' ? RED : BLUE} shade={state === 'rec' ? RED_D : BLUE_D} radius={70} depth={7} faceStyle={{ width: 132, height: 132 }}>
+            <Image source={UIIMG.mic} tintColor="#FFFFFF" style={{ width: 54, height: 54 }} contentFit="contain" />
+          </Btn3D>
+        </Animated.View>
+        <Text style={[st.micHint, state === 'rec' && { color: RED }]}>{state === 'rec' ? t('tapToSend') : state === 'wait' ? '…' : t('tapSpeak')}</Text>
+      </View>
       {!!heard && <Animated.Text entering={FadeIn} style={st.heard}>{t('heard')}: «{heard}»</Animated.Text>}
       <Press onPress={skip} style={{ alignSelf: 'center', padding: 8 }}><Text style={st.skipT}>{t('cantSpeak')}</Text></Press>
     </View>
@@ -259,9 +269,9 @@ function Pairs({ ex, lang, done }: { ex: Extract<Ex, { t: 'pairs' }>; lang: Lang
     );
   };
   return (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
-      <View style={{ flex: 1, gap: 10 }}>{left.map(w => cell(w, 'l'))}</View>
-      <View style={{ flex: 1, gap: 10 }}>{right.map(w => cell(w, 'r'))}</View>
+    <View style={{ flexDirection: 'row', gap: 14, flex: 1, alignItems: 'center' }}>
+      <View style={{ flex: 1, gap: 12 }}>{left.map(w => cell(w, 'l'))}</View>
+      <View style={{ flex: 1, gap: 12 }}>{right.map(w => cell(w, 'r'))}</View>
     </View>
   );
 }
@@ -276,9 +286,9 @@ function Dialog({ ex, lang, set }: { ex: Extract<Ex, { t: 'dialog' }>; lang: Lan
   const [sel, setSel] = useState<string | null>(null);
   useEffect(() => { setTimeout(() => speak(ex.q.sr), 300); }, [ex]);
   return (
-    <View style={{ gap: 14 }}>
+    <View style={{ gap: 14, flex: 1 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-        <Image source={IMG.wave} style={{ width: 60, height: 66 }} contentFit="contain" />
+        <Image source={IMG.wave} style={{ width: 76, height: 84 }} contentFit="contain" />
         <Press onPress={() => speak(ex.q.sr)} style={[st.dlgA]}>
           <Text style={st.bubbleT}>{ex.q.sr}</Text>
           <Text style={st.bubbleSub}>{ui(ex.q, lang)}</Text>
@@ -287,7 +297,7 @@ function Dialog({ ex, lang, set }: { ex: Extract<Ex, { t: 'dialog' }>; lang: Lan
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
         <View style={[st.dlgB, sel && { borderColor: BLUE_L, backgroundColor: BLUE_BG }]}><Text style={[st.bubbleT, { color: sel ? BLUE_D : C.faint }]}>{sel ?? '…'}</Text></View>
       </View>
-      <View style={{ gap: 10, marginTop: 6 }}>
+      <View style={{ gap: 12, marginTop: 'auto' }}>
         {opts.map(o => <Option key={o} label={o} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); speak(o); set({ ok: o === ex.a.sr, correct: ex.a.sr }); }} />)}
       </View>
     </View>
@@ -296,7 +306,7 @@ function Dialog({ ex, lang, set }: { ex: Extract<Ex, { t: 'dialog' }>; lang: Lan
 
 // ---------- урок ----------
 export default function LessonScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, start } = useLocalSearchParams<{ id: string; start?: string }>();
   const { t, lang, device, progress, finishLesson, addMistake, clearMistakes } = useStore();
   speakDevice = device;
   const ins = useSafeAreaInsets();
@@ -314,7 +324,7 @@ export default function LessonScreen() {
   const firstWrong = useRef(new Set<Ex>());
   const newDay = useRef(progress.last !== new Date().toISOString().slice(0, 10));
   const [queue, setQueue] = useState<Ex[]>(lesson.ex);
-  const [pos, setPos] = useState(0);
+  const [pos, setPos] = useState(Math.max(0, Math.min(+(start ?? 0) || 0, lesson.ex.length - 1)));
   const [pending, setPending] = useState<Pending>(null);
   const [result, setResult] = useState<Pending>(null);
   const [hearts, setHearts] = useState(5);
@@ -408,8 +418,8 @@ export default function LessonScreen() {
       {burst > 0 && <Animated.View key={burst} entering={ZoomIn.springify().damping(8)} pointerEvents="none" style={st.burst}><Image source={ICON.flame} style={{ width: 70, height: 86 }} contentFit="contain" /><Text style={st.burstT}>{combo} {t('inRow')}!</Text></Animated.View>}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <MoodCtx.Provider value={result ? (result.ok ? 'ok' : 'bad') : 'idle'}>
-        <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Animated.View key={pos} entering={FadeInDown.springify().damping(17)}>
+        <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 22, flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Animated.View key={pos} entering={FadeInDown.springify().damping(17)} style={{ flex: 1 }}>
             <Text style={st.q}>{typeTitle[ex.t]}</Text>
             {(ex.t === 'mc_sr' || ex.t === 'mc_ui' || ex.t === 'listen_choose') && <MC ex={ex} lang={lang} set={setPending} />}
             {ex.t === 'img' && <ImgChoice ex={ex} set={setPending} />}
@@ -454,7 +464,7 @@ const st = StyleSheet.create({
   burst: { position: 'absolute', alignSelf: 'center', top: '30%', zIndex: 50, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 28, paddingHorizontal: 26, paddingVertical: 14, borderWidth: 3, borderColor: '#FFD27A' },
   burstT: { fontFamily: F.display, fontSize: 26, color: '#FF9600', marginTop: 2 },
   dlgA: { flex: 1, backgroundColor: C.card, borderRadius: 16, borderBottomLeftRadius: 4, borderWidth: 2, borderColor: C.line, padding: 14 },
-  dlgB: { maxWidth: '80%', minWidth: 120, backgroundColor: C.paper2, borderRadius: 16, borderBottomRightRadius: 4, borderWidth: 2, borderColor: C.line, borderStyle: 'dashed', padding: 14 },
+  dlgB: { maxWidth: '85%', minWidth: 200, minHeight: 54, justifyContent: 'center', backgroundColor: C.paper2, borderRadius: 16, borderBottomRightRadius: 4, borderWidth: 2, borderColor: C.line, borderStyle: 'dashed', padding: 14 },
   comboRow: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', gap: 5, marginTop: 2 },
   combo: { fontFamily: F.display, fontSize: 15, color: '#FF9600' },
   imgWord: { fontFamily: F.display, fontSize: 28, color: C.ink },
@@ -466,8 +476,8 @@ const st = StyleSheet.create({
   listenRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 18, marginVertical: 10 },
   slowT: { position: 'absolute', bottom: 3, right: 6, fontFamily: F.bodyHeavy, fontSize: 11, color: '#FFFFFF' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  opt: { minHeight: 60, paddingHorizontal: 12, paddingVertical: 12 },
-  optT: { fontFamily: F.bodyHeavy, fontSize: 18, color: C.ink, textAlign: 'center' },
+  opt: { minHeight: 64, paddingHorizontal: 14, paddingVertical: 14 },
+  optT: { fontFamily: F.bodyHeavy, fontSize: 19, color: C.ink, textAlign: 'center' },
   optSub: { fontFamily: F.body, fontSize: 13, color: C.soft, marginTop: 2 },
   prompt: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginBottom: 6 },
   bubble: { flex: 1, backgroundColor: C.card, borderRadius: 16, borderWidth: 2, borderColor: C.line, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 34 },
@@ -484,13 +494,14 @@ const st = StyleSheet.create({
   fillT: { fontFamily: F.display, fontSize: 26, color: C.ink },
   blank: { borderBottomWidth: 3, borderBottomColor: C.faint, marginHorizontal: 6, minWidth: 70, alignItems: 'center' },
   area: { minHeight: 140, borderRadius: 16, borderWidth: 2, borderColor: C.line, backgroundColor: C.paper2, padding: 14, fontFamily: F.bodyBold, fontSize: 18, color: C.ink, textAlignVertical: 'top' },
+  micHint: { fontFamily: F.display, fontSize: 16, color: BLUE_D, marginTop: 18 },
   micBig: { height: 72, flexDirection: 'row', gap: 12 },
   micBigT: { fontFamily: F.display, fontSize: 17, color: BLUE },
   heard: { fontFamily: F.bodyBold, fontSize: 15, color: C.soft, textAlign: 'center' },
   skipT: { fontFamily: F.bodyHeavy, fontSize: 14, color: C.faint, letterSpacing: 0.4 },
-  pair: { minHeight: 60, padding: 8 },
-  pairT: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.ink, textAlign: 'center' },
-  foot: { paddingHorizontal: 18, paddingTop: 14, borderTopWidth: 2, borderTopColor: C.line },
+  pair: { minHeight: 68, padding: 10 },
+  pairT: { fontFamily: F.bodyHeavy, fontSize: 18, color: C.ink, textAlign: 'center' },
+  foot: { paddingHorizontal: 18, paddingTop: 10 },
   cta: { height: 54 },
   ctaT: { fontFamily: F.display, fontSize: 17, color: '#FFFFFF', letterSpacing: 0.6 },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 18, paddingTop: 18 },

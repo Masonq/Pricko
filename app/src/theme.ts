@@ -21,6 +21,6 @@ export const IMG = {
 export const ICON = {
   flame: require('../assets/ui/i-flame.png'), star: require('../assets/ui/i-star.png'), heart: require('../assets/ui/i-heart.png'),
   crown: require('../assets/ui/i-crown.png'), lock: require('../assets/ui/i-lock.png'), check: require('../assets/ui/i-check.png'),
-  chest: require('../assets/ui/i-chest.png'), speaker: require('../assets/ui/i-speaker.png'), mic: require('../assets/ui/i-mic.png'),
+  chest: require('../assets/ui/i-chest.png'), bolt: require('../assets/ui/i-bolt.png'), speaker: require('../assets/ui/i-speaker.png'), mic: require('../assets/ui/i-mic.png'),
 };
 export const WORLD_IMG: Record<string, any> = { dragons: IMG.book, space: IMG.space, sea: IMG.sea, forest: IMG.forest };

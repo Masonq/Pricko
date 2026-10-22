@@ -9,7 +9,9 @@ export type Ex =
   | { t: 'tiles_ui'; item: W }
   | { t: 'fill'; item: Fill }
   | { t: 'listen_type'; item: W }
-  | { t: 'speak'; item: W };
+  | { t: 'speak'; item: W }
+  | { t: 'cyr'; items: W[] }
+  | { t: 'dialog'; q: W; a: W; wrong: string[] };
 export type Lesson = { id: string; ex: Ex[] };
 export type Unit = { id: string; title: W; color: string; lessons: Lesson[] };
 export const COURSE = raw as unknown as Unit[];
@@ -26,3 +28,8 @@ export function similar(a: string, b: string) {
   for (let i = 1; i <= x.length; i++) for (let j = 1; j <= y.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
   return 1 - d[x.length][y.length] / Math.max(x.length, y.length);
 }
+
+const L2 = [['dž', 'џ'], ['Dž', 'Џ'], ['lj', 'љ'], ['Lj', 'Љ'], ['nj', 'њ'], ['Nj', 'Њ']];
+const L1: Record<string, string> = {};
+'abvgdđežzijklmnoprstćufhcčšABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ'.split('').forEach((c, i) => { L1[c] = 'абвгдђежзијклмнопрстћуфхцчшАБВГДЂЕЖЗИЈКЛМНОПРСТЋУФХЦЧШ'[i]; });
+export function toCyr(s: string) { let r = s; for (const [a, b] of L2) r = r.split(a).join(b); return r.split('').map(c => L1[c] ?? c).join(''); }

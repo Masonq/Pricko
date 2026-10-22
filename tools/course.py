@@ -91,6 +91,18 @@ for w in ALLW:
     if w["sr"] in IMG: w["img"] = IMG[w["sr"]]
 IMGW = [w for w in ALLW if "img" in w]
 
+DIALOGS = {
+ "pozdravi": (W("Zdravo! Kako se zoveš?","Привет! Как тебя зовут?","Hi! What is your name?"), W("Zovem se Ana. A ti?","Меня зовут Ана. А тебя?","My name is Ana. And you?"), ["Hvala, dobro.", "Laku noć!"]),
+ "pekara": (W("Dobar dan! Izvolite?","Добрый день! Что желаете?","Good afternoon! What can I get you?"), W("Jedan burek sa sirom, molim.","Один бурек с сыром, пожалуйста.","One cheese burek, please."), ["Doviđenja, hvala.", "Ja sam Marko."]),
+ "brojevi": (W("Koliko imaš godina?","Сколько тебе лет?","How old are you?"), W("Imam dvadeset godina.","Мне двадцать лет.","I am twenty years old."), ["Tri kafe, molim.", "Danas je petak."]),
+ "grad": (W("Dobar dan! Mogu li da vam pomognem?","Добрый день! Могу я вам помочь?","Hello! Can I help you?"), W("Gde je stanica, molim vas?","Где остановка, подскажите?","Where is the stop, please?"), ["Ovo je moja mama.", "Hvala, sit sam."]),
+ "porodica": (W("Imaš li brata ili sestru?","У тебя есть брат или сестра?","Do you have a brother or a sister?"), W("Imam jednu sestru.","У меня одна сестра.","I have one sister."), ["Imam deset dinara.", "Idem levo."]),
+ "kafana": (W("Dobro veče! Šta ćete da popijete?","Добрый вечер! Что будете пить?","Good evening! What will you drink?"), W("Čašu vode, molim.","Стакан воды, пожалуйста.","A glass of water, please."), ["Laku noć, mama.", "Imam brata."]),
+ "dani": (W("Kada radiš?","Когда ты работаешь?","When do you work?"), W("Radim od ponedeljka do petka.","Я работаю с понедельника по пятницу.","I work from Monday to Friday."), ["Danas je hleb.", "Zovem se Petak."]),
+ "prodavnica": (W("Treba li vam kesa?","Вам нужен пакет?","Do you need a bag?"), W("Da, hvala.","Да, спасибо.","Yes, thank you."), ["Ja sam kesa.", "Dobro veče, tata."]),
+ "stan": (W("Kakav je tvoj stan?","Какая у тебя квартира?","What is your apartment like?"), W("Moj stan je mali, ali lep.","Моя квартира маленькая, но красивая.","My apartment is small but nice."), ["Moj stan je burek.", "Idem tramvajem."]),
+}
+
 def toks(s): return [w.strip(".,!?") for w in s.split() if w.strip(".,!?")]
 def lesson_ex(u, words, sents, fills, rnd):
     ex = []
@@ -111,6 +123,7 @@ def lesson_ex(u, words, sents, fills, rnd):
     for f in fills: ex.append({"t": "fill", "item": f})
     if sents: ex.append({"t": "listen_type", "item": rnd.choice(sents)})
     if sents: ex.append({"t": "speak", "item": sents[0]})
+    ex.append({"t": "cyr", "items": rnd.sample(u["words"], 4)})
     imgs = [e for e in ex if e["t"] == "img"]
     rest = [e for e in ex if e["t"] != "img"]
     head, tail = (imgs[:1] + rest[:2]) if imgs else rest[:3], (imgs[1:] + rest[2:]) if imgs else rest[3:]; rnd.shuffle(tail)
@@ -126,6 +139,9 @@ for u in UNITS:
         {"id": f"{u['id']}-2", "ex": lesson_ex(u, w[h:], s[2:4], f[:1], rnd)},
         {"id": f"{u['id']}-3", "ex": lesson_ex(u, rnd.sample(w, 6), s[3:] + s[:1], f[1:], rnd)},
     ]
+    q, a, wrong = DIALOGS[u["id"]]
+    for L in lessons[1:]:
+        L["ex"].insert(len(L["ex"]) // 2, {"t": "dialog", "q": q, "a": a, "wrong": wrong})
     course.append({"id": u["id"], "title": u["title"], "color": u["color"], "lessons": lessons})
 out = pathlib.Path(__file__).resolve().parent.parent / "app" / "src" / "course.json"
 out.write_text(json.dumps(course, ensure_ascii=False))

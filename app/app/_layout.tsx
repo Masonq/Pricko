@@ -26,6 +26,7 @@ function Root() {
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.paper }, animation: 'slide_from_right', gestureEnabled: true }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="speed" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="lesson/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />

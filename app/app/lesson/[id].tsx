@@ -8,7 +8,7 @@ import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedV
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaUrl, sayCached, sttCheck } from '../../src/api';
 import { Confetti } from '../../src/confetti';
-import { allLessons, COURSE, Ex, fold, norm, shuffle, similar, tokens, ui, W } from '../../src/course';
+import { allLessons, COURSE, Ex, fold, norm, shuffle, similar, toCyr, tokens, ui, W } from '../../src/course';
 import { Lang } from '../../src/i18n';
 import { WORD_IMG } from '../../src/words';
 import { sfx } from '../../src/sfx';
@@ -48,10 +48,19 @@ function Option({ label, sel, onPress, sub, big }: { label: string; sel: boolean
     </Btn3D>
   );
 }
+const MoodCtx = React.createContext<'idle' | 'ok' | 'bad'>('idle');
 function Character({ img = IMG.pricko, children }: { img?: any; children: React.ReactNode }) {
+  const mood = React.useContext(MoodCtx);
+  const y = useSharedValue(0), r = useSharedValue(0), sc = useSharedValue(1);
+  useEffect(() => {
+    if (mood === 'ok') { y.value = withSequence(withTiming(-26, { duration: 180 }), withSpring(0, { damping: 6 })); sc.value = withSequence(withTiming(1.12, { duration: 180 }), withSpring(1)); }
+    else if (mood === 'bad') { r.value = withSequence(withTiming(-10, { duration: 70 }), withTiming(10, { duration: 70 }), withTiming(-8, { duration: 70 }), withTiming(8, { duration: 70 }), withSpring(0)); }
+    else { y.value = withSequence(withTiming(-4, { duration: 900 }), withTiming(0, { duration: 900 })); }
+  }, [mood]);
+  const a = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }, { rotate: `${r.value}deg` }, { scale: sc.value }] }));
   return (
     <View style={st.prompt}>
-      <Image source={img} style={{ width: 96, height: 112 }} contentFit="contain" />
+      <Animated.View style={a}><Image source={mood === 'ok' ? IMG.happy : mood === 'bad' ? IMG.sad : img} style={{ width: 96, height: 112 }} contentFit="contain" /></Animated.View>
       <View style={st.bubble}><View style={st.bubbleTail} />{children}</View>
     </View>
   );
@@ -251,6 +260,34 @@ function Pairs({ ex, lang, done }: { ex: Extract<Ex, { t: 'pairs' }>; lang: Lang
   );
 }
 
+function Cyr({ ex, done }: { ex: Extract<Ex, { t: 'cyr' }>; done: () => void }) {
+  const items = useMemo(() => ex.items.map(w => ({ ...w, ru: toCyr(w.sr), en: toCyr(w.sr) })), [ex]);
+  return <Pairs ex={{ t: 'pairs', items }} lang="ru" done={done} />;
+}
+
+function Dialog({ ex, lang, set }: { ex: Extract<Ex, { t: 'dialog' }>; lang: Lang; set: (p: Pending) => void }) {
+  const opts = useMemo(() => shuffle([ex.a.sr, ...ex.wrong]), [ex]);
+  const [sel, setSel] = useState<string | null>(null);
+  useEffect(() => { setTimeout(() => speak(ex.q.sr), 300); }, [ex]);
+  return (
+    <View style={{ gap: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+        <Image source={IMG.wave} style={{ width: 60, height: 66 }} contentFit="contain" />
+        <Press onPress={() => speak(ex.q.sr)} style={[st.dlgA]}>
+          <Text style={st.bubbleT}>{ex.q.sr}</Text>
+          <Text style={st.bubbleSub}>{ui(ex.q, lang)}</Text>
+        </Press>
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <View style={[st.dlgB, sel && { borderColor: BLUE_L, backgroundColor: BLUE_BG }]}><Text style={[st.bubbleT, { color: sel ? BLUE_D : C.faint }]}>{sel ?? '…'}</Text></View>
+      </View>
+      <View style={{ gap: 10, marginTop: 6 }}>
+        {opts.map(o => <Option key={o} label={o} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); speak(o); set({ ok: o === ex.a.sr, correct: ex.a.sr }); }} />)}
+      </View>
+    </View>
+  );
+}
+
 // ---------- урок ----------
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -276,6 +313,8 @@ export default function LessonScreen() {
   const [result, setResult] = useState<Pending>(null);
   const [hearts, setHearts] = useState(5);
   const [combo, setCombo] = useState(0);
+  const [burst, setBurst] = useState(0);
+  useEffect(() => { if (burst) { const tm = setTimeout(() => setBurst(0), 1100); return () => clearTimeout(tm); } }, [burst]);
   const [stats, setStats] = useState({ right: 0, wrong: 0 });
   const [phase, setPhase] = useState<'play' | 'done' | 'fail'>('play');
   const t0 = useRef(Date.now());
@@ -284,16 +323,17 @@ export default function LessonScreen() {
   const bar = useSharedValue(0);
   useEffect(() => { bar.value = withSpring(doneCount / total, { damping: 16 }); }, [doneCount]);
   const barA = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
+  const hot = combo >= 3;
   const heartS = useSharedValue(1);
   const heartA = useAnimatedStyle(() => ({ transform: [{ scale: heartS.value }] }));
   const ex = queue[pos];
-  const typeTitle: Record<string, string> = { img: t('qImg'), mc_sr: t('qMcSr'), mc_ui: t('qMcUi'), listen_choose: t('qListen'), listen_type: t('qType'), tiles_sr: t('qTilesSr'), tiles_ui: t('qTilesUi'), pairs: t('qPairs'), fill: t('qFill'), speak: t('qSpeak') };
+  const typeTitle: Record<string, string> = { cyr: t('qCyr'), dialog: t('qDialog'), img: t('qImg'), mc_sr: t('qMcSr'), mc_ui: t('qMcUi'), listen_choose: t('qListen'), listen_type: t('qType'), tiles_sr: t('qTilesSr'), tiles_ui: t('qTilesUi'), pairs: t('qPairs'), fill: t('qFill'), speak: t('qSpeak') };
 
   const check = () => {
     if (!pending) return;
     setResult(pending);
     if (pending.ok) {
-      const c = combo + 1; setCombo(c); sfx(c >= 3 && c % 3 === 0 ? 'combo' : 'correct');
+      const c = combo + 1; setCombo(c); sfx(c >= 3 && c % 3 === 0 ? 'combo' : 'correct'); if (c >= 3 && c % 3 === 0) setBurst(c);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setStats(s => ({ ...s, right: s.right + 1 }));
     } else {
@@ -355,11 +395,13 @@ export default function LessonScreen() {
     <View style={{ flex: 1, backgroundColor: C.paper }}>
       <View style={[st.head, { paddingTop: ins.top + 8 }]}>
         <Press onPress={() => router.back()} style={{ padding: 6 }}><Image source={UIIMG.close} tintColor={C.faint} style={{ width: 22, height: 22 }} /></Press>
-        <View style={st.track}><Animated.View style={[st.fill, barA]}><View style={st.shine} /></Animated.View></View>
+        <View style={st.track}><Animated.View style={[st.fill, barA, hot && { backgroundColor: '#FF9600' }]}><View style={st.shine} /></Animated.View></View>
         <Animated.View style={[st.hearts, heartA]}><Image source={ICON.heart} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.heartsT}>{hearts}</Text></Animated.View>
       </View>
       {combo >= 3 && !result && <Animated.View entering={ZoomIn.springify()} style={st.comboRow}><Image source={ICON.flame} style={{ width: 18, height: 22 }} contentFit="contain" /><Text style={st.combo}>{combo} {t('inRow')}</Text></Animated.View>}
+      {burst > 0 && <Animated.View key={burst} entering={ZoomIn.springify().damping(8)} pointerEvents="none" style={st.burst}><Image source={ICON.flame} style={{ width: 70, height: 86 }} contentFit="contain" /><Text style={st.burstT}>{combo} {t('inRow')}!</Text></Animated.View>}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <MoodCtx.Provider value={result ? (result.ok ? 'ok' : 'bad') : 'idle'}>
         <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View key={pos} entering={FadeInDown.springify().damping(17)}>
             <Text style={st.q}>{typeTitle[ex.t]}</Text>
@@ -370,9 +412,12 @@ export default function LessonScreen() {
             {ex.t === 'listen_type' && <ListenType ex={ex} t={t} set={setPending} />}
             {ex.t === 'speak' && <Speak ex={ex} lang={lang} t={t} device={device} set={setPending} skip={autoOk} />}
             {ex.t === 'pairs' && <Pairs ex={ex} lang={lang} done={autoOk} />}
+            {ex.t === 'cyr' && <Cyr ex={ex} done={autoOk} />}
+            {ex.t === 'dialog' && <Dialog ex={ex} lang={lang} set={setPending} />}
           </Animated.View>
         </ScrollView>
-        {ex.t !== 'pairs' && !result && (
+        </MoodCtx.Provider>
+        {ex.t !== 'pairs' && ex.t !== 'cyr' && !result && (
           <View style={[st.foot, { paddingBottom: ins.bottom + 14 }]}>
             <Btn3D disabled={!pending} onPress={check} face={pending ? GREEN : C.gray} shade={pending ? GREEN_D : C.gray} radius={16} faceStyle={st.cta}><Text style={[st.ctaT, !pending && { color: C.faint }]}>{t('check').toUpperCase()}</Text></Btn3D>
           </View>
@@ -400,6 +445,10 @@ const st = StyleSheet.create({
   shine: { position: 'absolute', left: 8, right: 8, top: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
   hearts: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   heartsT: { fontFamily: F.bodyHeavy, fontSize: 18, color: RED },
+  burst: { position: 'absolute', alignSelf: 'center', top: '30%', zIndex: 50, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 28, paddingHorizontal: 26, paddingVertical: 14, borderWidth: 3, borderColor: '#FFD27A' },
+  burstT: { fontFamily: F.display, fontSize: 26, color: '#FF9600', marginTop: 2 },
+  dlgA: { flex: 1, backgroundColor: C.card, borderRadius: 16, borderBottomLeftRadius: 4, borderWidth: 2, borderColor: C.line, padding: 14 },
+  dlgB: { maxWidth: '80%', minWidth: 120, backgroundColor: C.paper2, borderRadius: 16, borderBottomRightRadius: 4, borderWidth: 2, borderColor: C.line, borderStyle: 'dashed', padding: 14 },
   comboRow: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', gap: 5, marginTop: 2 },
   combo: { fontFamily: F.display, fontSize: 15, color: '#FF9600' },
   imgWord: { fontFamily: F.display, fontSize: 28, color: C.ink },

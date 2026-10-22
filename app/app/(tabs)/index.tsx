@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { allLessons, COURSE } from '../../src/course';
 import { sfx } from '../../src/sfx';
@@ -32,6 +32,7 @@ export default function Path() {
   const dayXp = progress.daily?.[new Date().toISOString().slice(0, 10)] ?? 0;
   const ins = useSafeAreaInsets();
   const nextIdx = allLessons.findIndex(l => !progress.done[l.id]);
+  const [sheet, setSheet] = useState<{ id: string; color: string; title: string; n: number; done: boolean } | null>(null);
   const scroll = useRef<ScrollView>(null); const unitY = useRef<Record<number, number>>({}); const nodesY = useRef<Record<number, number>>({}); const scrolled = useRef(false);
   const goTo = (ui: number, y: number) => { if (scrolled.current) return; scrolled.current = true; const top = (unitY.current[ui] ?? 0) + (nodesY.current[ui] ?? 0) + y - 220; if (top > 40) setTimeout(() => scroll.current?.scrollTo({ y: top, animated: true }), 350); };
   let n = 0;
@@ -45,6 +46,13 @@ export default function Path() {
         <Press onPress={() => router.push('/settings')} style={s.more}><View style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map(i => <View key={i} style={s.dot} />)}</View></Press>
       </View>
       <ScrollView ref={scroll} contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
+          <Btn3D onPress={() => { sfx('pop'); router.push('/speed'); }} face="#2B2552" shade="#17132F" radius={18} depth={5} faceStyle={s.speed}>
+            <View style={s.speedGlow} />
+            <Image source={ICON.bolt} style={{ width: 52, height: 52 }} contentFit="contain" />
+            <View style={{ flex: 1 }}><Text style={s.speedT}>{t('speed')}</Text><Text style={s.speedS}>{t('speedSub')}</Text></View>
+          </Btn3D>
+        </Animated.View>
         {(progress.mistakes?.length ?? 0) >= 3 && (
           <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <Btn3D onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: 'practice' } }); }} border={C.line} shade={C.line} radius={16} faceStyle={s.practice}>
@@ -78,7 +86,7 @@ export default function Path() {
                     <View key={l.id} style={{ alignItems: 'center', transform: [{ translateX: off }] }} onLayout={cur ? e => goTo(ui, e.nativeEvent.layout.y) : undefined}>
                       {cur && <Bounce><View style={s.tip}><Text style={[s.tipT, { color: u.color }]}>{t('start').toUpperCase()}</Text><View style={s.tipArrow} /></View></Bounce>}
                       <View style={cur ? s.ring : undefined}>
-                        <Btn3D disabled={locked} onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: l.id } }); }} face={face} shade={sh} depth={7} radius={40} faceStyle={s.node}>
+                        <Btn3D disabled={locked} onPress={() => { sfx('pop'); setSheet({ id: l.id, color: u.color, title: lang === 'en' ? u.title.en : lang === 'ru' ? u.title.ru : u.title.sr, n: (idx % 3) + 1, done }); }} face={face} shade={sh} depth={7} radius={40} faceStyle={s.node}>
                           <Image source={done ? ICON.crown : locked ? ICON.lock : ICON.star} style={{ width: 38, height: 38, opacity: locked ? 0.55 : 1 }} contentFit="contain" />
                         </Btn3D>
                       </View>
@@ -93,10 +101,31 @@ export default function Path() {
           );
         })}
       </ScrollView>
+      {sheet && (
+        <Animated.View entering={FadeIn.duration(150)} style={s.dim}>
+          <Press haptic={false} scale={1} onPress={() => setSheet(null)} style={StyleSheet.absoluteFill}><View /></Press>
+          <Animated.View entering={SlideInDown.springify().damping(17)} style={[s.sheet, { backgroundColor: sheet.color }]}>
+            <Text style={s.sheetK}>{t('lessonN').toUpperCase()} {sheet.n} {t('ofN')} 3</Text>
+            <Text style={s.sheetT}>{sheet.title}</Text>
+            <Btn3D onPress={() => { const id = sheet.id; setSheet(null); router.push({ pathname: '/lesson/[id]', params: { id } }); }} face="#FFFFFF" shade="rgba(0,0,0,0.25)" radius={16} style={{ marginTop: 16 }} faceStyle={{ height: 54 }}>
+              <Text style={[s.sheetBtn, { color: sheet.color }]}>{(sheet.done ? t('repeat') : t('start')).toUpperCase()} +10 XP</Text>
+            </Btn3D>
+          </Animated.View>
+        </Animated.View>
+      )}
     </View>
   );
 }
 const s = StyleSheet.create({
+  dim: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  sheet: { margin: 14, marginBottom: 24, borderRadius: 22, padding: 20 },
+  sheetK: { fontFamily: F.bodyHeavy, fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5 },
+  sheetT: { fontFamily: F.display, fontSize: 26, color: '#FFFFFF', marginTop: 2 },
+  sheetBtn: { fontFamily: F.display, fontSize: 16, letterSpacing: 0.6 },
+  speed: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, overflow: 'hidden', justifyContent: 'flex-start' },
+  speedGlow: { position: 'absolute', left: -20, top: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,200,0,0.18)' },
+  speedT: { fontFamily: F.display, fontSize: 20, color: '#FFC800' },
+  speedS: { fontFamily: F.bodyBold, fontSize: 13.5, color: 'rgba(255,255,255,0.8)', marginTop: 1 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: C.paper, borderBottomWidth: 2, borderBottomColor: C.line },
   flag: { width: 34, height: 25, borderRadius: 6, overflow: 'hidden', borderWidth: 2, borderColor: C.line },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 5 },

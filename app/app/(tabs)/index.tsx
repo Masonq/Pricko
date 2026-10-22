@@ -9,6 +9,9 @@ import { sfx } from '../../src/sfx';
 import { useStore } from '../../src/store';
 import { C, F, ICON, IMG } from '../../src/theme';
 import { Btn3D, Press } from '../../src/ui';
+import { WORD_IMG } from '../../src/words';
+
+const UNIT_ART: Record<string, any> = { pozdravi: WORD_IMG.kafa, pekara: WORD_IMG.burek, brojevi: ICON.star, grad: WORD_IMG.tramvaj, porodica: WORD_IMG.kuca, kafana: WORD_IMG.cevapi, dani: ICON.flame, prodavnica: WORD_IMG.kesa, stan: WORD_IMG.krevet };
 
 export const darken = (hex: string, f = 0.78) => { const n = parseInt(hex.slice(1), 16); const c = (v: number) => Math.round(v * f).toString(16).padStart(2, '0'); return `#${c(n >> 16)}${c((n >> 8) & 255)}${c(n & 255)}`; };
 const OFFS = [0, -56, -84, -56, 0, 56, 84, 56];
@@ -56,11 +59,13 @@ export default function Path() {
             <View key={u.id} onLayout={e => { unitY.current[ui] = e.nativeEvent.layout.y; }}>
               <Animated.View entering={FadeInDown.delay(ui * 50).springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 20 }}>
                 <Btn3D face={u.color} shade={darken(u.color)} radius={16} haptic={false} faceStyle={s.unitFace}>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, paddingRight: 86 }}>
                     <Text style={s.unitN}>{t('unit').toUpperCase()} {ui + 1}</Text>
                     <Text style={s.unitT}>{lang === 'en' ? u.title.en : lang === 'ru' ? u.title.ru : u.title.sr}</Text>
+                    {lang !== 'sr' && <Text style={s.unitSr}>{u.title.sr}</Text>}
                   </View>
-                  {lang !== 'sr' && <View style={[s.unitTag, { borderColor: 'rgba(255,255,255,0.45)' }]}><Text style={s.unitTagT}>{u.title.sr}</Text></View>}
+                  <View style={s.unitArtBg} />
+                  <Image source={UNIT_ART[u.id] ?? IMG.pricko} style={s.unitArt} contentFit="contain" />
                 </Btn3D>
               </Animated.View>
               <View style={{ alignItems: 'center', paddingTop: 22, gap: 16 }} onLayout={e => { nodesY.current[ui] = e.nativeEvent.layout.y; }}>
@@ -99,9 +104,12 @@ const s = StyleSheet.create({
   statT: { fontFamily: F.bodyHeavy, fontSize: 17 },
   more: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.faint },
-  unitFace: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 16 },
+  unitFace: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 18, minHeight: 96, overflow: 'hidden', justifyContent: 'flex-start' },
   unitN: { fontFamily: F.bodyHeavy, fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.4 },
   unitT: { fontFamily: F.display, fontSize: 22, color: '#FFFFFF', marginTop: 1 },
+  unitSr: { fontFamily: F.bodyBold, fontSize: 14, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
+  unitArtBg: { position: 'absolute', right: -20, top: -30, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(255,255,255,0.14)' },
+  unitArt: { position: 'absolute', right: 10, bottom: 8, width: 84, height: 74 },
   unitTag: { borderWidth: 2, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
   unitTagT: { fontFamily: F.bodyHeavy, fontSize: 13, color: '#FFFFFF' },
   node: { width: 74, height: 68 },

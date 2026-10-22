@@ -1,9 +1,9 @@
 import raw from './course.json';
 import { Lang } from './i18n';
-export type W = { sr: string; ru: string; en: string };
+export type W = { sr: string; ru: string; en: string; img?: string };
 export type Fill = { sr: string; opts: string[]; ok: string; ru: string; en: string };
 export type Ex =
-  | { t: 'mc_sr' | 'mc_ui' | 'listen_choose'; item: W; wrong: W[] }
+  | { t: 'mc_sr' | 'mc_ui' | 'listen_choose' | 'img'; item: W; wrong: W[] }
   | { t: 'pairs'; items: W[] }
   | { t: 'tiles_sr'; item: W; extra: string[] }
   | { t: 'tiles_ui'; item: W }

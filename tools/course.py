@@ -82,6 +82,15 @@ UNITS = [
            {"sr": "Živim sa ___.", "opts": ["sestrom", "sestra", "sestru"], "ok": "sestrom", "ru": "Я живу с сестрой.", "en": "I live with my sister."}]},
 ]
 
+IMG = {"hleb":"hleb","burek":"burek","kifla":"kifla","jogurt":"jogurt","kafa":"kafa","voda":"voda","sir":"sir","meso":"meso","mleko":"mleko",
+       "taksi":"taksi","autobus":"autobus","tramvaj":"tramvaj","stanica":"stanica","kuća":"kuca","stan":"stan","prozor":"prozor","vrata":"vrata",
+       "jabuka":"jabuka","banana":"banana","paradajz":"paradajz","krompir":"krompir","jaja":"jaja","šećer":"secer","kesa":"kesa","ćevapi":"cevapi",
+       "supa":"supa","krevet":"krevet","sto":"sto","stolica":"stolica","kuhinja":"kuhinja","kupatilo":"kupatilo","salata":"salata","pivo":"pivo","čaša":"casa","tanjir":"tanjir"}
+ALLW = [w for u in UNITS for w in u["words"]]
+for w in ALLW:
+    if w["sr"] in IMG: w["img"] = IMG[w["sr"]]
+IMGW = [w for w in ALLW if "img" in w]
+
 def toks(s): return [w.strip(".,!?") for w in s.split() if w.strip(".,!?")]
 def lesson_ex(u, words, sents, fills, rnd):
     ex = []
@@ -89,6 +98,11 @@ def lesson_ex(u, words, sents, fills, rnd):
     for w in words[:3]: ex.append({"t": "mc_sr", "item": w, "wrong": rnd.sample([x for x in u["words"] if x != w], 3)})
     ex.append({"t": "pairs", "items": rnd.sample(words, min(5, len(words)))})
     for w in words[3:5]: ex.append({"t": "mc_ui", "item": w, "wrong": rnd.sample([x for x in u["words"] if x != w], 3)})
+    pics = [w for w in words if "img" in w]
+    for w in pics[:2]:
+        same = [x for x in u["words"] if "img" in x and x != w]
+        pool = same if len(same) >= 3 else same + rnd.sample([x for x in IMGW if x not in same and x != w], 3 - len(same))
+        ex.append({"t": "img", "item": w, "wrong": rnd.sample(pool, 3)})
     for w in words[-2:]: ex.append({"t": "listen_choose", "item": w, "wrong": rnd.sample([x for x in u["words"] if x != w], 3)})
     for s in sents[:2]:
         dis = rnd.sample([t for w in u["words"] for t in toks(w["sr"]) if t.lower() not in [x.lower() for x in toks(s["sr"])]], 3)
@@ -97,7 +111,9 @@ def lesson_ex(u, words, sents, fills, rnd):
     for f in fills: ex.append({"t": "fill", "item": f})
     if sents: ex.append({"t": "listen_type", "item": rnd.choice(sents)})
     if sents: ex.append({"t": "speak", "item": sents[0]})
-    head, tail = ex[:3], ex[3:]; rnd.shuffle(tail)
+    imgs = [e for e in ex if e["t"] == "img"]
+    rest = [e for e in ex if e["t"] != "img"]
+    head, tail = (imgs[:1] + rest[:2]) if imgs else rest[:3], (imgs[1:] + rest[2:]) if imgs else rest[3:]; rnd.shuffle(tail)
     return head + tail
 
 course = []

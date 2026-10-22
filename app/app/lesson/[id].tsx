@@ -10,6 +10,7 @@ import { mediaUrl, sayCached, sttCheck } from '../../src/api';
 import { Confetti } from '../../src/confetti';
 import { allLessons, COURSE, Ex, fold, norm, shuffle, similar, tokens, ui, W } from '../../src/course';
 import { Lang } from '../../src/i18n';
+import { WORD_IMG } from '../../src/words';
 import { sfx } from '../../src/sfx';
 import { useStore } from '../../src/store';
 import { C, F, ICON, IMG, R } from '../../src/theme';
@@ -56,7 +57,7 @@ function Character({ img = IMG.pricko, children }: { img?: any; children: React.
   );
 }
 
-function MC({ ex, lang, set }: { ex: Extract<Ex, { t: 'mc_sr' | 'mc_ui' | 'listen_choose' }>; lang: Lang; set: (p: Pending) => void }) {
+function MC({ ex, lang, set }: { ex: Extract<Ex, { wrong: W[] }>; lang: Lang; set: (p: Pending) => void }) {
   const opts = useMemo(() => shuffle([ex.item, ...ex.wrong]), [ex]);
   const [sel, setSel] = useState<W | null>(null);
   const showSr = ex.t !== 'mc_sr';
@@ -64,7 +65,7 @@ function MC({ ex, lang, set }: { ex: Extract<Ex, { t: 'mc_sr' | 'mc_ui' | 'liste
   const correct = showSr ? ex.item.sr : ui(ex.item, lang);
   return (
     <View style={{ gap: 18 }}>
-      {ex.t === 'mc_sr' && <Character><Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.bubbleBig}>{ex.item.sr}</Text></Press></Character>}
+      {ex.t === 'mc_sr' && <Character>{ex.item.img && WORD_IMG[ex.item.img] && <Image source={WORD_IMG[ex.item.img]} style={{ width: 84, height: 74, marginBottom: 6 }} contentFit="contain" />}<Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.bubbleBig}>{ex.item.sr}</Text></Press></Character>}
       {ex.t === 'mc_ui' && <Character img={IMG.think}><Text style={st.bubbleBig}>{ui(ex.item, lang)}</Text></Character>}
       {ex.t === 'listen_choose' && <View style={st.listenRow}><SpeakBtn text={ex.item.sr} size={96} /><SpeakBtn text={ex.item.sr} size={64} slow /></View>}
       <View style={st.grid}>
@@ -73,6 +74,26 @@ function MC({ ex, lang, set }: { ex: Extract<Ex, { t: 'mc_sr' | 'mc_ui' | 'liste
             <Option big label={showSr ? o.sr : ui(o, lang)} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); if (showSr) speak(o.sr); set({ ok: o === ex.item, correct }); }} />
           </View>
         ))}
+      </View>
+    </View>
+  );
+}
+
+function ImgChoice({ ex, lang, set }: { ex: Extract<Ex, { wrong: W[] }>; lang: Lang; set: (p: Pending) => void }) {
+  const opts = useMemo(() => shuffle([ex.item, ...ex.wrong]), [ex]);
+  const [sel, setSel] = useState<W | null>(null);
+  return (
+    <View style={{ gap: 16 }}>
+      <Text style={st.imgWord}>«{ui(ex.item, lang)}»</Text>
+      <View style={st.grid}>
+        {opts.map((o, i) => { const on = sel === o; return (
+          <View key={i} style={{ width: '50%', padding: 6 }}>
+            <Btn3D onPress={() => { sfx('tap'); setSel(o); speak(o.sr); set({ ok: o === ex.item, correct: ex.item.sr }); }}
+              face={on ? BLUE_BG : C.card} border={on ? BLUE_L : C.line} shade={on ? BLUE_L : C.line} radius={16} faceStyle={st.imgCard}>
+              {o.img && WORD_IMG[o.img] ? <Image source={WORD_IMG[o.img]} style={{ width: '82%', height: 110 }} contentFit="contain" /> : null}
+              <Text style={[st.imgT, on && { color: BLUE_D }]}>{o.sr}</Text>
+            </Btn3D>
+          </View>); })}
       </View>
     </View>
   );
@@ -265,7 +286,7 @@ export default function LessonScreen() {
   const heartS = useSharedValue(1);
   const heartA = useAnimatedStyle(() => ({ transform: [{ scale: heartS.value }] }));
   const ex = queue[pos];
-  const typeTitle: Record<string, string> = { mc_sr: t('qMcSr'), mc_ui: t('qMcUi'), listen_choose: t('qListen'), listen_type: t('qType'), tiles_sr: t('qTilesSr'), tiles_ui: t('qTilesUi'), pairs: t('qPairs'), fill: t('qFill'), speak: t('qSpeak') };
+  const typeTitle: Record<string, string> = { img: t('qImg'), mc_sr: t('qMcSr'), mc_ui: t('qMcUi'), listen_choose: t('qListen'), listen_type: t('qType'), tiles_sr: t('qTilesSr'), tiles_ui: t('qTilesUi'), pairs: t('qPairs'), fill: t('qFill'), speak: t('qSpeak') };
 
   const check = () => {
     if (!pending) return;
@@ -342,6 +363,7 @@ export default function LessonScreen() {
           <Animated.View key={pos} entering={FadeInDown.springify().damping(17)}>
             <Text style={st.q}>{typeTitle[ex.t]}</Text>
             {(ex.t === 'mc_sr' || ex.t === 'mc_ui' || ex.t === 'listen_choose') && <MC ex={ex} lang={lang} set={setPending} />}
+            {ex.t === 'img' && <ImgChoice ex={ex} lang={lang} set={setPending} />}
             {(ex.t === 'tiles_sr' || ex.t === 'tiles_ui') && <Tiles ex={ex} lang={lang} set={setPending} />}
             {ex.t === 'fill' && <Fill ex={ex} lang={lang} set={setPending} />}
             {ex.t === 'listen_type' && <ListenType ex={ex} t={t} set={setPending} />}
@@ -379,6 +401,9 @@ const st = StyleSheet.create({
   heartsT: { fontFamily: F.bodyHeavy, fontSize: 18, color: RED },
   comboRow: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', gap: 5, marginTop: 2 },
   combo: { fontFamily: F.display, fontSize: 15, color: '#FF9600' },
+  imgWord: { fontFamily: F.display, fontSize: 22, color: BLUE_D, marginTop: -10 },
+  imgCard: { height: 168, paddingTop: 10, justifyContent: 'space-between', paddingBottom: 12 },
+  imgT: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.ink },
   q: { fontFamily: F.display, fontSize: 25, lineHeight: 30, color: C.ink, marginBottom: 18 },
   sub: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.soft },
   wordRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

@@ -33,6 +33,7 @@ const S = {
   wrongT: { sr: 'Netačno', ru: 'Неверно', en: 'Incorrect' },
   rightAnswer: { sr: 'Tačan odgovor', ru: 'Правильный ответ', en: 'Correct answer' },
   almost: { sr: 'Pazi na kvačice', ru: 'Почти: следите за č, ć, š, ž, đ', en: 'Almost: mind the č, ć, š, ž, đ' },
+  qImg: { sr: 'Koja slika je', ru: 'Выберите картинку', en: 'Which one is' },
   qMcSr: { sr: 'Šta znači?', ru: 'Что это значит?', en: 'What does it mean?' },
   qMcUi: { sr: 'Kako se kaže?', ru: 'Как сказать по-сербски?', en: 'How do you say it in Serbian?' },
   qListen: { sr: 'Šta čuješ?', ru: 'Что вы слышите?', en: 'What do you hear?' },

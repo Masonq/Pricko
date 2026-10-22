@@ -1,5 +1,5 @@
 {
-  "time": "2026-10-22 02:46:45",
+  "time": "2026-10-22 03:38:25",
   "keys": {
     "groq": true,
     "mistral": true
@@ -11,13 +11,13 @@
     "mistral:mistral-small-latest"
   ],
   "llm": {
-    "openai/gpt-oss-120b": "ok 902ms {\"reply\": \"Naravno, jedan burek sa sirom. Da li želite i jogurt?\", \"translation\": \"Конечно, один бурек с сыром. Хотите ещё йогурт?\", \"correction\": {\"wrong\": \"Jedan burek sa sir\", \"right\": \"Jedan burek sa sirom\", \"why\": \"",
-    "openai/gpt-oss-20b": "ok 351ms {\"reply\": \"Naravno, jedan burek sa sirom. Želite li i jogurt?\", \"translation\": \"Конечно, один бурак с сыром. Хотите ли вы также йогурт?\", \"correction\": null, \"hint\": \"Da, jedan jogurt, molim.\", \"done\": false}",
+    "openai/gpt-oss-120b": "ok 444ms {\"reply\": \"Naravno, još jogurt?\", \"translation\": \"Конечно, ещё йогурт?\", \"correction\": {\"wrong\": \"sa sir\", \"right\": \"sa sirom\", \"why\": \"родительный падеж: 'sir' → 'sirom'\"}, \"hint\": \"Da li želite i jogurt?\", \"done\": fals",
+    "openai/gpt-oss-20b": "ok 306ms {\"reply\": \"Naravno, i jogurt?\", \"translation\": \"Конечно, йогурт тоже?\", \"correction\": null, \"hint\": \"Da, jedan jogurt, molim.\", \"done\": false}",
     "mistral-medium-latest": "ошибка ai_busy: 429 {\"object\":\"error\",\"message\":\"Rate limit exceeded\",\"type\":\"rate_limited\",\"param\":null,\"code\":\"1300\",\"raw_status_code\":429}",
     "mistral-small-latest": "ошибка ai_busy: 429 {\"object\":\"error\",\"message\":\"Rate limit exceeded\",\"type\":\"rate_limited\",\"param\":null,\"code\":\"1300\",\"raw_status_code\":429}"
   },
   "tts": {
-    "url": "/media/t_06a559cf32f94ebb9a4f58a70c26e548.mp3",
+    "url": "/media/t_242e5058e71643d2bad514fbd6af4798.mp3",
     "attempts": [
       {
         "provider": "sr-RS-SophieNeural",
@@ -35,7 +35,7 @@
     "sr": "0.72 Dobar dan! Čitam berksesirom, malim!",
     "hr": "0.77 Dobar dan! Čitam brksa sajrom, malim!",
     "bs": "0.76 Dobar dan! Čitin birksis sirom, malim!",
-    "auto": "0.77 Dobar dan! Jidin birksisairam, malim!"
+    "auto": "0.77 Dobar dan! Jiden birksisairam, malim!"
   },
   "stt_choice": "hr"
 }

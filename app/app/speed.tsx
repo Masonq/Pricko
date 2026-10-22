@@ -62,7 +62,8 @@ export default function Speed() {
   };
   if (phase === 'count') return (
     <View style={[s.wrap, { justifyContent: 'center', alignItems: 'center' }]}>
-      <Image source={ICON.bolt} style={{ width: 110, height: 110 }} contentFit="contain" />
+      <View style={s.glow} />
+      <Image source={ICON.bolt} style={{ width: 120, height: 120 }} contentFit="contain" />
       <Animated.Text key={count} entering={ZoomIn.springify().damping(8)} style={s.count}>{count === 0 ? t('go') : count}</Animated.Text>
     </View>
   );
@@ -70,7 +71,7 @@ export default function Speed() {
     <View style={[s.wrap, { alignItems: 'center', paddingTop: ins.top + 40, paddingBottom: ins.bottom + 20 }]}>
       {isBest && <Confetti />}
       <Animated.View entering={ZoomIn.springify().damping(9)}><Image source={isBest ? IMG.happy : IMG.wave} style={{ width: 200, height: 210 }} contentFit="contain" /></Animated.View>
-      <Text style={[s.endT, { color: isBest ? '#FF9600' : '#FFFFFF' }]}>{isBest ? t('newBest') : t('score')}</Text>
+      <Text style={[s.endT, { color: isBest ? '#FF9600' : '#3C3C3C' }]}>{isBest ? t('newBest') : t('score')}</Text>
       <Text style={s.big}>{score}</Text>
       <Text style={s.bestT}>{t('best')}: {Math.max(best, score)}</Text>
       <View style={{ flex: 1 }} />
@@ -83,11 +84,12 @@ export default function Speed() {
   return (
     <View style={[s.wrap, { paddingTop: ins.top + 8, paddingBottom: ins.bottom + 16 }]}>
       <View style={s.head}>
-        <Press onPress={end} style={{ padding: 6 }}><Image source={require('../assets/ui/close.png')} tintColor="rgba(255,255,255,0.6)" style={{ width: 22, height: 22 }} /></Press>
+        <Press onPress={end} style={{ padding: 6 }}><Image source={require('../assets/ui/close.png')} tintColor="#AFAFAF" style={{ width: 22, height: 22 }} /></Press>
         <View style={s.track}><Animated.View style={[s.fill, tA]} /></View>
         <View style={s.scoreBox}><Image source={ICON.bolt} style={{ width: 22, height: 22 }} contentFit="contain" /><Text style={s.scoreT}>{score}</Text></View>
       </View>
       {streak >= 5 && <Animated.Text entering={FadeIn} style={s.mult}>×2</Animated.Text>}
+      <View style={[s.glow, { top: '24%' }]} />
       <Animated.View style={[{ flex: 1, justifyContent: 'center' }, sA]}>
         {q && <Animated.Text key={q.w.sr + score} entering={ZoomIn.duration(180)} style={s.word}>{q.w.sr}</Animated.Text>}
         {flash && <Animated.Text key={'f' + score} entering={ZoomIn.springify()} style={s.flash}>{flash}</Animated.Text>}
@@ -95,7 +97,7 @@ export default function Speed() {
       <View style={s.grid}>
         {q?.opts.map((o, i) => (
           <View key={o.sr + i} style={{ width: '50%', padding: 6 }}>
-            <Btn3D onPress={() => pick(o)} face="#3E3770" shade="#2A2454" radius={18} depth={5} faceStyle={{ height: 84, paddingHorizontal: 10 }}>
+            <Btn3D onPress={() => pick(o)} face="#FFFFFF" border="#E5E5E5" shade="#E5E5E5" radius={18} depth={5} faceStyle={{ height: 84, paddingHorizontal: 10 }}>
               <Text style={s.opt}>{ui(o, lang)}</Text>
             </Btn3D>
           </View>
@@ -105,21 +107,22 @@ export default function Speed() {
   );
 }
 const s = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#211B45', paddingHorizontal: 16 },
-  count: { fontFamily: F.display, fontSize: 96, color: '#FFC800', marginTop: 10 },
+  wrap: { flex: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 16 },
+  glow: { position: 'absolute', alignSelf: 'center', top: '18%', width: 300, height: 300, borderRadius: 150, backgroundColor: '#FFF6CC' },
+  count: { fontFamily: F.display, fontSize: 96, color: '#FF9600', marginTop: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  track: { flex: 1, height: 16, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.15)', overflow: 'hidden' },
+  track: { flex: 1, height: 16, borderRadius: 8, backgroundColor: '#E5E5E5', overflow: 'hidden' },
   fill: { height: 16, borderRadius: 8 },
   scoreBox: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  scoreT: { fontFamily: F.display, fontSize: 20, color: '#FFC800', minWidth: 28 },
+  scoreT: { fontFamily: F.display, fontSize: 20, color: '#E5A500', minWidth: 28 },
   mult: { alignSelf: 'center', fontFamily: F.display, fontSize: 18, color: '#FF9600', marginTop: 8 },
-  word: { fontFamily: F.display, fontSize: 44, color: '#FFFFFF', textAlign: 'center' },
+  word: { fontFamily: F.display, fontSize: 46, color: '#3C3C3C', textAlign: 'center' },
   flash: { position: 'absolute', alignSelf: 'center', top: '22%', fontFamily: F.display, fontSize: 30, color: '#58CC02' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  opt: { fontFamily: F.bodyHeavy, fontSize: 18, color: '#FFFFFF', textAlign: 'center' },
+  opt: { fontFamily: F.bodyHeavy, fontSize: 18, color: '#3C3C3C', textAlign: 'center' },
   endT: { fontFamily: F.display, fontSize: 26, marginTop: 8 },
-  big: { fontFamily: F.display, fontSize: 84, color: '#FFC800' },
-  bestT: { fontFamily: F.bodyHeavy, fontSize: 16, color: 'rgba(255,255,255,0.7)' },
+  big: { fontFamily: F.display, fontSize: 84, color: '#E5A500' },
+  bestT: { fontFamily: F.bodyHeavy, fontSize: 16, color: '#AFAFAF' },
   ctaT: { fontFamily: F.display, fontSize: 16, letterSpacing: 0.6 },
-  quit: { fontFamily: F.bodyHeavy, fontSize: 14, color: 'rgba(255,255,255,0.6)', letterSpacing: 0.5 },
+  quit: { fontFamily: F.bodyHeavy, fontSize: 14, color: '#AFAFAF', letterSpacing: 0.5 },
 });

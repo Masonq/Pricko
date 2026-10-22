@@ -66,6 +66,12 @@ function Character({ img = IMG.pricko, children }: { img?: any; children: React.
   );
 }
 
+function CountUp({ to, style, prefix = '', suffix = '' }: { to: number; style: any; prefix?: string; suffix?: string }) {
+  const [v, setV] = useState(0);
+  useEffect(() => { let i = 0; const steps = 20; const tm = setInterval(() => { i++; setV(Math.round((to * i) / steps)); if (i >= steps) clearInterval(tm); }, 45); return () => clearInterval(tm); }, [to]);
+  return <Text style={style}>{prefix}{v}{suffix}</Text>;
+}
+
 function MC({ ex, lang, set }: { ex: Extract<Ex, { wrong: W[] }>; lang: Lang; set: (p: Pending) => void }) {
   const opts = useMemo(() => shuffle([ex.item, ...ex.wrong]), [ex]);
   const [sel, setSel] = useState<W | null>(null);
@@ -376,8 +382,8 @@ export default function LessonScreen() {
         )}
         {ok && (
           <Animated.View entering={FadeInDown.delay(350)} style={st.cards}>
-            <View style={[st.card, { borderColor: '#FFC800', backgroundColor: '#FFC800' }]}><Text style={st.cardH}>{t('xp').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.star} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: '#E5A500' }]}>+{10 + (stats.wrong === 0 ? 5 : 0)}</Text></View></View>
-            <View style={[st.card, { borderColor: GREEN, backgroundColor: GREEN }]}><Text style={st.cardH}>{t('accuracy').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.check} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: GREEN_D }]}>{acc}%</Text></View></View>
+            <View style={[st.card, { borderColor: '#FFC800', backgroundColor: '#FFC800' }]}><Text style={st.cardH}>{t('xp').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.star} style={st.cardIc} contentFit="contain" /><CountUp to={10 + (stats.wrong === 0 ? 5 : 0)} prefix="+" style={[st.cardV, { color: '#E5A500' }]} /></View></View>
+            <View style={[st.card, { borderColor: GREEN, backgroundColor: GREEN }]}><Text style={st.cardH}>{t('accuracy').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.check} style={st.cardIc} contentFit="contain" /><CountUp to={acc} suffix="%" style={[st.cardV, { color: GREEN_D }]} /></View></View>
             <View style={[st.card, { borderColor: '#FF9600', backgroundColor: '#FF9600' }]}><Text style={st.cardH}>{t('streakDays').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.flame} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: '#FF9600' }]}>{progress.streak}</Text></View></View>
           </Animated.View>
         )}

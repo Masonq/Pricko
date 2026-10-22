@@ -47,7 +47,7 @@ export default function Path() {
       </View>
       <ScrollView ref={scroll} contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
-          <Btn3D onPress={() => { sfx('pop'); router.push('/speed'); }} face="#2B2552" shade="#17132F" radius={18} depth={5} faceStyle={s.speed}>
+          <Btn3D onPress={() => { sfx('pop'); router.push('/speed'); }} face="#FFF6CC" border="#FFD84D" shade="#FFC800" radius={18} depth={5} faceStyle={s.speed}>
             <View style={s.speedGlow} />
             <Image source={ICON.bolt} style={{ width: 52, height: 52 }} contentFit="contain" />
             <View style={{ flex: 1 }}><Text style={s.speedT}>{t('speed')}</Text><Text style={s.speedS}>{t('speedSub')}</Text></View>
@@ -71,12 +71,15 @@ export default function Path() {
                     <Text style={s.unitN}>{t('unit').toUpperCase()} {ui + 1}</Text>
                     <Text style={s.unitT}>{lang === 'en' ? u.title.en : lang === 'ru' ? u.title.ru : u.title.sr}</Text>
                     {lang !== 'sr' && <Text style={s.unitSr}>{u.title.sr}</Text>}
+                    <View style={s.uTrack}><View style={[s.uFill, { width: `${(u.lessons.filter(l => progress.done[l.id]).length / u.lessons.length) * 100}%` }]} /></View>
                   </View>
                   <View style={s.unitArtBg} />
                   <Image source={UNIT_ART[u.id] ?? IMG.pricko} style={s.unitArt} contentFit="contain" />
                 </Btn3D>
               </Animated.View>
               <View style={{ alignItems: 'center', paddingTop: 22, gap: 16 }} onLayout={e => { nodesY.current[ui] = e.nativeEvent.layout.y; }}>
+                <View style={[s.blob, { backgroundColor: u.color, left: ui % 2 ? -60 : undefined, right: ui % 2 ? undefined : -60, top: 40 }]} />
+                <View style={[s.blob, { backgroundColor: u.color, width: 120, height: 120, left: ui % 2 ? undefined : -40, right: ui % 2 ? -40 : undefined, top: 210 }]} />
                 <Image source={POSES[ui % POSES.length]} style={[s.pose, ui % 2 ? { left: 20 } : { right: 20 }]} contentFit="contain" />
                 {u.lessons.map(l => {
                   const idx = n++; const done = !!progress.done[l.id]; const cur = idx === nextIdx; const locked = !done && !cur;
@@ -123,9 +126,9 @@ const s = StyleSheet.create({
   sheetT: { fontFamily: F.display, fontSize: 26, color: '#FFFFFF', marginTop: 2 },
   sheetBtn: { fontFamily: F.display, fontSize: 16, letterSpacing: 0.6 },
   speed: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, overflow: 'hidden', justifyContent: 'flex-start' },
-  speedGlow: { position: 'absolute', left: -20, top: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,200,0,0.18)' },
-  speedT: { fontFamily: F.display, fontSize: 20, color: '#FFC800' },
-  speedS: { fontFamily: F.bodyBold, fontSize: 13.5, color: 'rgba(255,255,255,0.8)', marginTop: 1 },
+  speedGlow: { position: 'absolute', right: -30, top: -40, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(255,200,0,0.22)' },
+  speedT: { fontFamily: F.display, fontSize: 20, color: '#E58A00' },
+  speedS: { fontFamily: F.bodyBold, fontSize: 13.5, color: '#9C7A1F', marginTop: 1 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: C.paper, borderBottomWidth: 2, borderBottomColor: C.line },
   flag: { width: 34, height: 25, borderRadius: 6, overflow: 'hidden', borderWidth: 2, borderColor: C.line },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -136,6 +139,8 @@ const s = StyleSheet.create({
   unitFace: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 18, minHeight: 96, overflow: 'hidden', justifyContent: 'flex-start' },
   unitN: { fontFamily: F.bodyHeavy, fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.4 },
   unitT: { fontFamily: F.display, fontSize: 22, color: '#FFFFFF', marginTop: 1 },
+  uTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)', marginTop: 10, overflow: 'hidden', maxWidth: 170 },
+  uFill: { height: 8, borderRadius: 4, backgroundColor: '#FFFFFF', minWidth: 8 },
   unitSr: { fontFamily: F.bodyBold, fontSize: 14, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
   unitArtBg: { position: 'absolute', right: -20, top: -30, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(255,255,255,0.14)' },
   unitArt: { position: 'absolute', right: 10, bottom: 8, width: 84, height: 74 },
@@ -149,5 +154,6 @@ const s = StyleSheet.create({
   practice: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, justifyContent: 'flex-start' },
   practiceT: { fontFamily: F.display, fontSize: 17, color: C.ink },
   practiceS: { fontFamily: F.bodyBold, fontSize: 13.5, color: C.soft, marginTop: 1 },
+  blob: { position: 'absolute', width: 200, height: 200, borderRadius: 100, opacity: 0.07 },
   pose: { position: 'absolute', top: 70, width: 110, height: 120 },
 });

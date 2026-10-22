@@ -192,15 +192,29 @@ async def scenarios():
 @app.post("/api/talk")
 async def talk(scenario: str = Form(...), history: str = Form("[]"), ui: str = Form("ru"), text: str = Form(""),
                audio: Optional[UploadFile] = File(None), x_device: str = Header("anon")):
+    data = await audio.read() if audio is not None else None
+    return await _talk(scenario, history, ui, text, data, (audio.filename if audio else None) or "rec.m4a", x_device)
+
+@app.post("/api/talk2")
+async def talk2(payload: dict, x_device: str = Header("anon")):
+    """То же, но запись приходит в JSON base64 — надёжнее загрузки файла с телефона."""
+    import base64
+    b64 = payload.get("audio_b64") or ""
+    data = base64.b64decode(b64) if b64 else None
+    hist = payload.get("history", [])
+    return await _talk(str(payload.get("scenario", "")), json.dumps(hist if isinstance(hist, list) else []), str(payload.get("ui", "ru")),
+                       str(payload.get("text", "")), data, "rec." + str(payload.get("ext", "m4a"))[:5], x_device)
+
+async def _talk(scenario, history, ui, text, data, filename, x_device):
     sc = SCENARIOS.get(scenario)
     if not sc: raise HTTPException(404, "scenario")
     ui = ui if ui in LANGNAME else "ru"
     take(x_device[:64], "talk", TALK_PER_DAY)
     heard = text.strip()
-    if audio is not None:
-        data = await audio.read()
+    if data is not None:
         if len(data) > 8_000_000: raise HTTPException(413, "audio_too_big")
-        heard = await stt(data, audio.filename or "rec.m4a", prompt=f"Razgovor na srpskom latinicom. {sc['open']} {sc['goal']['sr']}.")
+        if len(data) < 800: return {"heard": "", "empty": True}
+        heard = await stt(data, filename, prompt=f"Razgovor na srpskom latinicom. {sc['open']} {sc['goal']['sr']}.")
     heard = lat(heard)
     if not heard: return {"heard": "", "empty": True}
     try: hist = json.loads(history)[-12:]

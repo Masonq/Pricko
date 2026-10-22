@@ -44,7 +44,7 @@ export default function Talk() {
   useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60); }, [msgs.length, busy]);
 
   const flash = (s: string) => { setNote(s); setTimeout(() => setNote(n => (n === s ? '' : n)), 4500); };
-  const errText = (e: unknown) => e instanceof ApiError ? (e.code === 'limit' ? t('limit') : e.code === 'offline' ? t('offline') : t('busy')) : t('busy');
+  const errText = (e: unknown) => e instanceof ApiError ? (e.code === 'limit' ? t('limit') : e.code === 'offline' ? t('offline') : e.code === 'empty' ? t('notHeard') : t('busy')) : t('busy');
 
   const send = useCallback(async (a: { audioUri?: string; text?: string }) => {
     const mine: Msg = { id: uid(), role: 'user', text: a.text ?? '…', pending: !a.text };

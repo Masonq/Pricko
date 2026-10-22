@@ -4,6 +4,7 @@ const S = {
   start: { sr: 'Počni', ru: 'Начать', en: 'Start' },
   repeat: { sr: 'Ponovi', ru: 'Повторить', en: 'Repeat' },
   lessonN: { sr: 'Lekcija', ru: 'Урок', en: 'Lesson' },
+  inRow: { sr: 'zaredom', ru: 'подряд', en: 'in a row' },
   unit: { sr: 'Celina', ru: 'Раздел', en: 'Unit' },
   check: { sr: 'Proveri', ru: 'Проверить', en: 'Check' },
   next: { sr: 'Dalje', ru: 'Дальше', en: 'Continue' },

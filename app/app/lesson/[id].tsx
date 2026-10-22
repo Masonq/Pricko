@@ -11,11 +11,11 @@ import { allLessons, COURSE, Ex, fold, norm, shuffle, similar, tokens, ui, W } f
 import { Lang } from '../../src/i18n';
 import { sfx } from '../../src/sfx';
 import { useStore } from '../../src/store';
-import { C, F, IMG, R, shadow } from '../../src/theme';
-import { Press } from '../../src/ui';
+import { C, F, ICON, IMG, R } from '../../src/theme';
+import { Btn3D, Press } from '../../src/ui';
 
-const UIIMG = { heart: require('../../assets/ui/heart.png'), close: require('../../assets/ui/close.png'), speaker: require('../../assets/ui/speaker.png'), mic: require('../../assets/ui/mic.png') };
-const GREEN = '#58A700', GREEN_BG = '#D7FFB8', RED = '#C9372C', RED_BG = '#FFDFE0';
+const UIIMG = { close: require('../../assets/ui/close.png'), speaker: require('../../assets/ui/speaker.png'), check: require('../../assets/ui/check.png') };
+const GREEN = '#58CC02', GREEN_D = '#58A700', GREEN_BG = '#D7FFB8', RED = '#FF4B4B', RED_D = '#EA2B2B', RED_BG = '#FFDFE0', BLUE = '#1CB0F6', BLUE_D = '#1899D6', BLUE_BG = '#DDF4FF', BLUE_L = '#84D8FF';
 type Pending = { ok: boolean; correct: string; note?: string } | null;
 
 // ---------- озвучка ----------
@@ -30,20 +30,28 @@ async function speak(text: string, slow = false) {
 }
 function SpeakBtn({ text, size = 64, slow }: { text: string; size?: number; slow?: boolean }) {
   return (
-    <Press onPress={() => speak(text, slow)} style={[st.spk, { width: size, height: size, borderRadius: size * 0.28 }, slow && { backgroundColor: C.paper2 }]} scale={0.9}>
-      <Image source={UIIMG.speaker} tintColor={slow ? C.indigo : '#FFF4E0'} style={{ width: size * 0.5, height: size * 0.5 }} />
+    <Btn3D onPress={() => speak(text, slow)} face={BLUE} shade={BLUE_D} radius={size * 0.26} depth={slow ? 3 : 5} faceStyle={{ width: size, height: size }}>
+      <Image source={UIIMG.speaker} tintColor="#FFFFFF" style={{ width: size * 0.48, height: size * 0.48 }} />
       {slow && <Text style={st.slowT}>×½</Text>}
-    </Press>
+    </Btn3D>
   );
 }
 
 // ---------- варианты ответа ----------
-function Option({ label, sel, onPress, sub }: { label: string; sel: boolean; onPress: () => void; sub?: string }) {
+function Option({ label, sel, onPress, sub, big }: { label: string; sel: boolean; onPress: () => void; sub?: string; big?: boolean }) {
   return (
-    <Press onPress={onPress} scale={0.96} style={[st.opt, sel && st.optSel]}>
-      <Text style={[st.optT, sel && { color: C.indigo }]}>{label}</Text>
+    <Btn3D onPress={onPress} face={sel ? BLUE_BG : C.card} border={sel ? BLUE_L : C.line} shade={sel ? BLUE_L : C.line} radius={16} faceStyle={[st.opt, big && { minHeight: 74 }]}>
+      <Text style={[st.optT, sel && { color: BLUE_D }]}>{label}</Text>
       {!!sub && <Text style={st.optSub}>{sub}</Text>}
-    </Press>
+    </Btn3D>
+  );
+}
+function Character({ img = IMG.pricko, children }: { img?: any; children: React.ReactNode }) {
+  return (
+    <View style={st.prompt}>
+      <Image source={img} style={{ width: 96, height: 112 }} contentFit="contain" />
+      <View style={st.bubble}><View style={st.bubbleTail} />{children}</View>
+    </View>
   );
 }
 
@@ -55,13 +63,13 @@ function MC({ ex, lang, set }: { ex: Extract<Ex, { t: 'mc_sr' | 'mc_ui' | 'liste
   const correct = showSr ? ex.item.sr : ui(ex.item, lang);
   return (
     <View style={{ gap: 18 }}>
-      {ex.t === 'mc_sr' && <View style={st.wordRow}><SpeakBtn text={ex.item.sr} size={54} /><Text style={st.big}>{ex.item.sr}</Text></View>}
-      {ex.t === 'mc_ui' && <Text style={st.big}>{ui(ex.item, lang)}</Text>}
+      {ex.t === 'mc_sr' && <Character><Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.bubbleBig}>{ex.item.sr}</Text></Press></Character>}
+      {ex.t === 'mc_ui' && <Character img={IMG.think}><Text style={st.bubbleBig}>{ui(ex.item, lang)}</Text></Character>}
       {ex.t === 'listen_choose' && <View style={st.listenRow}><SpeakBtn text={ex.item.sr} size={96} /><SpeakBtn text={ex.item.sr} size={64} slow /></View>}
       <View style={st.grid}>
         {opts.map((o, i) => (
           <View key={i} style={{ width: '50%', padding: 5 }}>
-            <Option label={showSr ? o.sr : ui(o, lang)} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); if (showSr) speak(o.sr); set({ ok: o === ex.item, correct }); }} />
+            <Option big label={showSr ? o.sr : ui(o, lang)} sel={sel === o} onPress={() => { sfx('tap'); setSel(o); if (showSr) speak(o.sr); set({ ok: o === ex.item, correct }); }} />
           </View>
         ))}
       </View>
@@ -89,24 +97,21 @@ function Tiles({ ex, lang, set }: { ex: Extract<Ex, { t: 'tiles_sr' | 'tiles_ui'
   }, [picked]);
   return (
     <View style={{ gap: 16 }}>
-      <View style={st.prompt}>
-        <Image source={IMG.pricko} style={{ width: 70, height: 82 }} contentFit="contain" />
-        <View style={st.bubble}>
-          {!toSr && <Press onPress={() => speak(ex.item.sr)} style={{ marginBottom: 4 }}><Image source={UIIMG.speaker} tintColor={C.indigo} style={{ width: 22, height: 22 }} /></Press>}
-          <Text style={st.bubbleT}>{toSr ? ui(ex.item, lang) : ex.item.sr}</Text>
-        </View>
-      </View>
+      <Character img={toSr ? IMG.wave : IMG.pricko}>
+        {!toSr ? <Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 26, height: 22 }} contentFit="contain" /><Text style={[st.bubbleT, { flexShrink: 1 }]}>{ex.item.sr}</Text></Press>
+          : <Text style={st.bubbleT}>{ui(ex.item, lang)}</Text>}
+      </Character>
       <View style={st.answerLine}>
         {picked.map(i => { const b = bank.find(x => x.i === i)!; return (
           <Animated.View key={i} entering={ZoomIn.springify().damping(14)}>
-            <Press onPress={() => { sfx('pop'); setPicked(p => p.filter(x => x !== i)); }} style={st.tile} scale={0.92}><Text style={st.tileT}>{b.w}</Text></Press>
+            <Btn3D onPress={() => { sfx('pop'); setPicked(p => p.filter(x => x !== i)); }} border={C.line} shade={C.line} radius={14} depth={3} faceStyle={st.tile}><Text style={st.tileT}>{b.w}</Text></Btn3D>
           </Animated.View>); })}
       </View>
       <View style={st.bank}>
         {bank.map(b => { const used = picked.includes(b.i); return (
           <View key={b.i} style={[st.tileSlot]}>
-            {used ? <View style={[st.tile, { opacity: 0 }]}><Text style={st.tileT}>{b.w}</Text></View> :
-              <Press onPress={() => { sfx('pop'); if (toSr) speak(b.w); setPicked(p => [...p, b.i]); }} style={st.tile} scale={0.92}><Text style={st.tileT}>{b.w}</Text></Press>}
+            {used ? <View style={[st.tile, { opacity: 0, marginBottom: 3 }]}><Text style={st.tileT}>{b.w}</Text></View> :
+              <Btn3D onPress={() => { sfx('pop'); if (toSr) speak(b.w); setPicked(p => [...p, b.i]); }} border={C.line} shade={C.line} radius={14} depth={3} faceStyle={st.tile}><Text style={st.tileT}>{b.w}</Text></Btn3D>}
           </View>); })}
       </View>
     </View>
@@ -179,19 +184,15 @@ function Speak({ ex, lang, t, device, set, skip }: { ex: Extract<Ex, { t: 'speak
   };
   return (
     <View style={{ gap: 18 }}>
-      <View style={st.prompt}>
-        <Image source={IMG.pricko} style={{ width: 70, height: 82 }} contentFit="contain" />
-        <View style={st.bubble}>
-          <Press onPress={() => speak(ex.item.sr)} style={{ marginBottom: 4 }}><Image source={UIIMG.speaker} tintColor={C.indigo} style={{ width: 22, height: 22 }} /></Press>
-          <Text style={st.bubbleT}>{ex.item.sr}</Text>
-          <Text style={st.bubbleSub}>{ui(ex.item, lang)}</Text>
-        </View>
-      </View>
+      <Character img={IMG.wave}>
+        <Press onPress={() => speak(ex.item.sr)} style={st.wordRow}><Image source={ICON.speaker} style={{ width: 26, height: 22 }} contentFit="contain" /><Text style={[st.bubbleT, { flexShrink: 1 }]}>{ex.item.sr}</Text></Press>
+        <Text style={st.bubbleSub}>{ui(ex.item, lang)}</Text>
+      </Character>
       <Animated.View style={[{ alignSelf: 'stretch' }, pa]}>
-        <Press onPress={toggle} style={[st.micBig, state === 'rec' && { backgroundColor: RED, borderColor: '#9E2A21' }]} scale={0.97}>
-          <Image source={UIIMG.mic} tintColor="#FFF4E0" style={{ width: 30, height: 30 }} />
-          <Text style={st.micBigT}>{state === 'rec' ? t('tapToSend') : state === 'wait' ? '…' : t('tapSpeak')}</Text>
-        </Press>
+        <Btn3D onPress={toggle} face={state === 'rec' ? RED : C.card} border={state === 'rec' ? RED : C.line} shade={state === 'rec' ? RED_D : C.line} radius={16} faceStyle={st.micBig}>
+          <Image source={ICON.mic} style={{ width: 30, height: 40 }} contentFit="contain" />
+          <Text style={[st.micBigT, state === 'rec' && { color: '#FFFFFF' }]}>{state === 'rec' ? t('tapToSend') : state === 'wait' ? '…' : t('tapSpeak')}</Text>
+        </Btn3D>
       </Animated.View>
       {!!heard && <Animated.Text entering={FadeIn} style={st.heard}>{t('heard')}: «{heard}»</Animated.Text>}
       <Press onPress={skip} style={{ alignSelf: 'center', padding: 8 }}><Text style={st.skipT}>{t('cantSpeak')}</Text></Press>
@@ -212,10 +213,11 @@ function Pairs({ ex, lang, done }: { ex: Extract<Ex, { t: 'pairs' }>; lang: Lang
   const cell = (w: W, side: 'l' | 'r') => {
     const isOk = ok.includes(w), isSel = side === 'l' ? a === w : b === w, isBad = bad.includes(w) && (side === 'l' ? bad[0] === w : bad[1] === w);
     return (
-      <Press key={side + w.sr} disabled={isOk} onPress={() => { sfx('tap'); if (side === 'l') { setA(w); speak(w.sr); } else setB(w); }} scale={0.95}
-        style={[st.pair, isSel && st.optSel, isOk && { opacity: 0.35 }, isBad && { borderColor: RED, backgroundColor: RED_BG }]}>
-        <Text style={[st.pairT, isSel && { color: C.indigo }]} numberOfLines={2}>{side === 'l' ? w.sr : ui(w, lang)}</Text>
-      </Press>
+      <Btn3D key={side + w.sr} disabled={isOk} onPress={() => { sfx('tap'); if (side === 'l') { setA(w); speak(w.sr); } else setB(w); }}
+        face={isBad ? RED_BG : isSel ? BLUE_BG : C.card} border={isBad ? RED : isSel ? BLUE_L : C.line} shade={isBad ? RED : isSel ? BLUE_L : C.line} radius={14}
+        style={isOk ? { opacity: 0.3 } : undefined} faceStyle={st.pair}>
+        <Text style={[st.pairT, isSel && { color: BLUE_D }, isBad && { color: RED_D }]} numberOfLines={2}>{side === 'l' ? w.sr : ui(w, lang)}</Text>
+      </Btn3D>
     );
   };
   return (
@@ -287,20 +289,20 @@ export default function LessonScreen() {
     const ok = phase === 'done';
     return (
       <View style={[st.endWrap, { paddingTop: ins.top + 30, paddingBottom: ins.bottom + 20 }]}>
-        <Animated.View entering={ZoomIn.springify().damping(10)}><Image source={IMG.pricko} style={{ width: 190, height: 220 }} contentFit="contain" /></Animated.View>
+        <Animated.View entering={ZoomIn.springify().damping(10)}><Image source={ok ? IMG.happy : IMG.sad} style={{ width: 220, height: 230 }} contentFit="contain" /></Animated.View>
         <Animated.Text entering={FadeInDown.delay(200)} style={[st.endT, !ok && { color: RED }]}>{ok ? t('done') : t('outOfHearts')}</Animated.Text>
         {ok && (
           <Animated.View entering={FadeInDown.delay(350)} style={st.cards}>
-            <View style={[st.card, { borderColor: C.ochre }]}><Text style={[st.cardH, { backgroundColor: C.ochre }]}>{t('xp')}</Text><Text style={[st.cardV, { color: C.ochre }]}>+{10 + (stats.wrong === 0 ? 5 : 0)}</Text></View>
-            <View style={[st.card, { borderColor: GREEN }]}><Text style={[st.cardH, { backgroundColor: GREEN }]}>{t('accuracy')}</Text><Text style={[st.cardV, { color: GREEN }]}>{acc}%</Text></View>
-            <View style={[st.card, { borderColor: '#E8762C' }]}><Text style={[st.cardH, { backgroundColor: '#E8762C' }]}>{t('streakDays')}</Text><Text style={[st.cardV, { color: '#E8762C' }]}>{progress.streak}</Text></View>
+            <View style={[st.card, { borderColor: '#FFC800', backgroundColor: '#FFC800' }]}><Text style={st.cardH}>{t('xp').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.star} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: '#E5A500' }]}>+{10 + (stats.wrong === 0 ? 5 : 0)}</Text></View></View>
+            <View style={[st.card, { borderColor: GREEN, backgroundColor: GREEN }]}><Text style={st.cardH}>{t('accuracy').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.check} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: GREEN_D }]}>{acc}%</Text></View></View>
+            <View style={[st.card, { borderColor: '#FF9600', backgroundColor: '#FF9600' }]}><Text style={st.cardH}>{t('streakDays').toUpperCase()}</Text><View style={st.cardIn}><Image source={ICON.flame} style={st.cardIc} contentFit="contain" /><Text style={[st.cardV, { color: '#FF9600' }]}>{progress.streak}</Text></View></View>
           </Animated.View>
         )}
         <View style={{ flex: 1 }} />
-        <Press onPress={() => { sfx('tap'); if (ok) router.back(); else { setQueue(lesson.ex); setPos(0); setHearts(5); setStats({ right: 0, wrong: 0 }); setResult(null); setPending(null); setPhase('play'); } }}
-          style={[st.cta, { backgroundColor: ok ? GREEN : C.indigo, alignSelf: 'stretch', marginHorizontal: 20 }]}>
-          <Text style={st.ctaT}>{ok ? t('next') : t('again')}</Text>
-        </Press>
+        <Btn3D onPress={() => { sfx('tap'); if (ok) router.back(); else { setQueue(lesson.ex); setPos(0); setHearts(5); setStats({ right: 0, wrong: 0 }); setResult(null); setPending(null); setPhase('play'); } }}
+          face={ok ? GREEN : BLUE} shade={ok ? GREEN_D : BLUE_D} radius={16} style={{ alignSelf: 'stretch', marginHorizontal: 20 }} faceStyle={st.cta}>
+          <Text style={st.ctaT}>{(ok ? t('next') : t('again')).toUpperCase()}</Text>
+        </Btn3D>
         <Text style={st.time}>{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')}</Text>
       </View>
     );
@@ -309,11 +311,11 @@ export default function LessonScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
       <View style={[st.head, { paddingTop: ins.top + 8 }]}>
-        <Press onPress={() => router.back()} style={{ padding: 6 }}><Image source={UIIMG.close} tintColor={C.faint} style={{ width: 24, height: 24 }} /></Press>
+        <Press onPress={() => router.back()} style={{ padding: 6 }}><Image source={UIIMG.close} tintColor={C.faint} style={{ width: 22, height: 22 }} /></Press>
         <View style={st.track}><Animated.View style={[st.fill, barA]}><View style={st.shine} /></Animated.View></View>
-        <Animated.View style={[st.hearts, heartA]}><Image source={UIIMG.heart} tintColor={RED} style={{ width: 24, height: 24 }} /><Text style={st.heartsT}>{hearts}</Text></Animated.View>
+        <Animated.View style={[st.hearts, heartA]}><Image source={ICON.heart} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.heartsT}>{hearts}</Text></Animated.View>
       </View>
-      {combo >= 3 && !result && <Animated.Text entering={FadeIn} style={st.combo}>{combo} ✦</Animated.Text>}
+      {combo >= 3 && !result && <Animated.View entering={ZoomIn.springify()} style={st.comboRow}><Image source={ICON.flame} style={{ width: 18, height: 22 }} contentFit="contain" /><Text style={st.combo}>{combo} {t('inRow')}</Text></Animated.View>}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View key={pos} entering={FadeInDown.springify().damping(17)}>
@@ -328,16 +330,19 @@ export default function LessonScreen() {
         </ScrollView>
         {ex.t !== 'pairs' && !result && (
           <View style={[st.foot, { paddingBottom: ins.bottom + 14 }]}>
-            <Press disabled={!pending} onPress={check} style={[st.cta, !pending && st.ctaOff]}><Text style={[st.ctaT, !pending && { color: C.faint }]}>{t('check')}</Text></Press>
+            <Btn3D disabled={!pending} onPress={check} face={pending ? GREEN : C.gray} shade={pending ? GREEN_D : C.gray} radius={16} faceStyle={st.cta}><Text style={[st.ctaT, !pending && { color: C.faint }]}>{t('check').toUpperCase()}</Text></Btn3D>
           </View>
         )}
       </KeyboardAvoidingView>
       {result && (
         <Animated.View entering={SlideInDown.springify().damping(18)} style={[st.sheet, { backgroundColor: result.ok ? GREEN_BG : RED_BG, paddingBottom: ins.bottom + 14 }]}>
-          <Text style={[st.sheetT, { color: result.ok ? GREEN : RED }]}>{result.ok ? t('correct') : t('wrongT')}</Text>
-          {!!result.note && <Text style={[st.sheetS, { color: GREEN }]}>{result.note}: {result.correct}</Text>}
-          {!result.ok && <Text style={[st.sheetS, { color: RED }]}>{t('rightAnswer')}: {result.correct}</Text>}
-          <Press onPress={next} style={[st.cta, { backgroundColor: result.ok ? GREEN : RED, marginTop: 12 }]}><Text style={st.ctaT}>{t('next')}</Text></Press>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={[st.badge, { backgroundColor: result.ok ? GREEN : RED }]}><Image source={result.ok ? UIIMG.check : UIIMG.close} tintColor="#FFFFFF" style={{ width: 24, height: 24 }} /></View>
+            <Text style={[st.sheetT, { color: result.ok ? GREEN_D : RED_D }]}>{result.ok ? t('correct') : t('wrongT')}</Text>
+          </View>
+          {!!result.note && <Text style={[st.sheetS, { color: GREEN_D }]}>{result.note}: {result.correct}</Text>}
+          {!result.ok && <><Text style={[st.sheetL, { color: RED_D }]}>{t('rightAnswer')}:</Text><Text style={[st.sheetS, { color: RED_D }]}>{result.correct}</Text></>}
+          <Btn3D onPress={next} face={result.ok ? GREEN : RED} shade={result.ok ? GREEN_D : RED_D} radius={16} style={{ marginTop: 14 }} faceStyle={st.cta}><Text style={st.ctaT}>{t('next').toUpperCase()}</Text></Btn3D>
         </Animated.View>
       )}
     </View>
@@ -346,55 +351,58 @@ export default function LessonScreen() {
 
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingBottom: 8 },
-  track: { flex: 1, height: 16, borderRadius: 8, backgroundColor: '#E8DCC8', overflow: 'hidden' },
+  track: { flex: 1, height: 16, borderRadius: 8, backgroundColor: C.gray, overflow: 'hidden' },
   fill: { height: 16, borderRadius: 8, backgroundColor: GREEN, minWidth: 16 },
-  shine: { position: 'absolute', left: 8, right: 8, top: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)' },
+  shine: { position: 'absolute', left: 8, right: 8, top: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
   hearts: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  heartsT: { fontFamily: F.bodyHeavy, fontSize: 17, color: RED },
-  combo: { alignSelf: 'center', fontFamily: F.bodyHeavy, fontSize: 14, color: '#E8762C' },
-  q: { fontFamily: F.display, fontSize: 26, color: C.ink, marginBottom: 18 },
-  big: { fontFamily: F.display, fontSize: 32, color: C.ink, flexShrink: 1 },
-  sub: { fontFamily: F.bodyBold, fontSize: 16, color: C.soft },
-  wordRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  listenRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, marginVertical: 6 },
-  spk: { backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: '#1F2A58' },
-  slowT: { position: 'absolute', bottom: 4, right: 6, fontFamily: F.bodyHeavy, fontSize: 11, color: C.indigo },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
-  opt: { minHeight: 64, borderRadius: R.m, borderWidth: 2, borderColor: C.line, borderBottomWidth: 4, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 12 },
-  optSel: { borderColor: C.indigo, backgroundColor: C.indigoSoft },
-  optT: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.ink, textAlign: 'center' },
+  heartsT: { fontFamily: F.bodyHeavy, fontSize: 18, color: RED },
+  comboRow: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', gap: 5, marginTop: 2 },
+  combo: { fontFamily: F.display, fontSize: 15, color: '#FF9600' },
+  q: { fontFamily: F.display, fontSize: 25, lineHeight: 30, color: C.ink, marginBottom: 18 },
+  sub: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.soft },
+  wordRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  listenRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 18, marginVertical: 10 },
+  slowT: { position: 'absolute', bottom: 3, right: 6, fontFamily: F.bodyHeavy, fontSize: 11, color: '#FFFFFF' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  opt: { minHeight: 60, paddingHorizontal: 12, paddingVertical: 12 },
+  optT: { fontFamily: F.bodyHeavy, fontSize: 18, color: C.ink, textAlign: 'center' },
   optSub: { fontFamily: F.body, fontSize: 13, color: C.soft, marginTop: 2 },
-  prompt: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  bubble: { flex: 1, backgroundColor: C.card, borderRadius: 18, borderWidth: 2, borderColor: C.line, padding: 14, marginBottom: 10 },
-  bubbleT: { fontFamily: F.bodyHeavy, fontSize: 18, color: C.ink },
-  bubbleSub: { fontFamily: F.body, fontSize: 14, color: C.soft, marginTop: 2 },
-  answerLine: { minHeight: 112, borderTopWidth: 2, borderBottomWidth: 2, borderColor: C.line, flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 10, alignContent: 'flex-start' },
-  bank: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 6 },
-  tileSlot: { borderRadius: 14, backgroundColor: '#E8DCC8' },
-  tile: { paddingHorizontal: 14, height: 46, borderRadius: 14, backgroundColor: C.card, borderWidth: 2, borderColor: C.line, borderBottomWidth: 4, justifyContent: 'center' },
-  tileT: { fontFamily: F.bodyBold, fontSize: 17, color: C.ink },
+  prompt: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginBottom: 6 },
+  bubble: { flex: 1, backgroundColor: C.card, borderRadius: 16, borderWidth: 2, borderColor: C.line, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 34 },
+  bubbleTail: { position: 'absolute', left: -9, bottom: 18, width: 16, height: 16, backgroundColor: C.card, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: C.line, transform: [{ rotate: '45deg' }] },
+  bubbleT: { fontFamily: F.bodyHeavy, fontSize: 18, lineHeight: 24, color: C.ink },
+  bubbleBig: { fontFamily: F.display, fontSize: 24, color: C.ink, flexShrink: 1 },
+  bubbleSub: { fontFamily: F.bodyBold, fontSize: 14.5, color: C.soft, marginTop: 4 },
+  answerLine: { minHeight: 122, borderTopWidth: 2, borderBottomWidth: 2, borderColor: C.line, flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12, alignContent: 'flex-start' },
+  bank: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 10 },
+  tileSlot: { borderRadius: 14, backgroundColor: C.gray },
+  tile: { paddingHorizontal: 14, height: 46 },
+  tileT: { fontFamily: F.bodyBold, fontSize: 18, color: C.ink },
   fillLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end' },
   fillT: { fontFamily: F.display, fontSize: 26, color: C.ink },
   blank: { borderBottomWidth: 3, borderBottomColor: C.faint, marginHorizontal: 6, minWidth: 70, alignItems: 'center' },
-  area: { minHeight: 130, borderRadius: R.m, borderWidth: 2, borderColor: C.line, backgroundColor: C.card, padding: 14, fontFamily: F.bodyBold, fontSize: 18, color: C.ink, textAlignVertical: 'top' },
-  micBig: { height: 70, borderRadius: R.m, backgroundColor: C.indigo, borderBottomWidth: 5, borderBottomColor: '#1F2A58', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  micBigT: { fontFamily: F.bodyHeavy, fontSize: 17, color: '#FFF4E0' },
+  area: { minHeight: 140, borderRadius: 16, borderWidth: 2, borderColor: C.line, backgroundColor: C.paper2, padding: 14, fontFamily: F.bodyBold, fontSize: 18, color: C.ink, textAlignVertical: 'top' },
+  micBig: { height: 72, flexDirection: 'row', gap: 12 },
+  micBigT: { fontFamily: F.display, fontSize: 17, color: BLUE },
   heard: { fontFamily: F.bodyBold, fontSize: 15, color: C.soft, textAlign: 'center' },
-  skipT: { fontFamily: F.bodyHeavy, fontSize: 14, color: C.faint },
-  pair: { minHeight: 58, borderRadius: R.m, borderWidth: 2, borderBottomWidth: 4, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', padding: 8 },
-  pairT: { fontFamily: F.bodyHeavy, fontSize: 16, color: C.ink, textAlign: 'center' },
-  foot: { paddingHorizontal: 18, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line },
-  cta: { height: 56, borderRadius: R.m, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.18)' },
-  ctaOff: { backgroundColor: '#E8DCC8', borderBottomColor: '#D8CAB2' },
-  ctaT: { fontFamily: F.bodyHeavy, fontSize: 17, color: '#FFFFFF', letterSpacing: 0.3 },
+  skipT: { fontFamily: F.bodyHeavy, fontSize: 14, color: C.faint, letterSpacing: 0.4 },
+  pair: { minHeight: 60, padding: 8 },
+  pairT: { fontFamily: F.bodyHeavy, fontSize: 17, color: C.ink, textAlign: 'center' },
+  foot: { paddingHorizontal: 18, paddingTop: 14, borderTopWidth: 2, borderTopColor: C.line },
+  cta: { height: 54 },
+  ctaT: { fontFamily: F.display, fontSize: 17, color: '#FFFFFF', letterSpacing: 0.6 },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 18, paddingTop: 18 },
-  sheetT: { fontFamily: F.display, fontSize: 26 },
-  sheetS: { fontFamily: F.bodyBold, fontSize: 16, marginTop: 4 },
+  badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  sheetT: { fontFamily: F.display, fontSize: 25 },
+  sheetL: { fontFamily: F.display, fontSize: 17, marginTop: 10 },
+  sheetS: { fontFamily: F.bodyBold, fontSize: 17, marginTop: 2 },
   endWrap: { flex: 1, backgroundColor: C.paper, alignItems: 'center' },
-  endT: { fontFamily: F.display, fontSize: 32, color: C.ink, textAlign: 'center', marginTop: 10, paddingHorizontal: 20 },
-  cards: { flexDirection: 'row', gap: 10, marginTop: 24, paddingHorizontal: 16 },
-  card: { flex: 1, borderRadius: R.m, borderWidth: 2, overflow: 'hidden', backgroundColor: C.card, alignItems: 'center' },
-  cardH: { alignSelf: 'stretch', textAlign: 'center', color: '#FFF', fontFamily: F.bodyHeavy, fontSize: 12, paddingVertical: 5 },
-  cardV: { fontFamily: F.display, fontSize: 26, paddingVertical: 10 },
+  endT: { fontFamily: F.display, fontSize: 30, color: '#FFC800', textAlign: 'center', marginTop: 6, paddingHorizontal: 20 },
+  cards: { flexDirection: 'row', gap: 10, marginTop: 26, paddingHorizontal: 16 },
+  card: { flex: 1, borderRadius: 16, borderWidth: 2, overflow: 'hidden' },
+  cardH: { textAlign: 'center', color: '#FFFFFF', fontFamily: F.display, fontSize: 11.5, paddingVertical: 5, letterSpacing: 0.4 },
+  cardIn: { backgroundColor: '#FFFFFF', borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14 },
+  cardIc: { width: 22, height: 22 },
+  cardV: { fontFamily: F.display, fontSize: 21 },
   time: { fontFamily: F.bodyBold, color: C.faint, marginTop: 10 },
 });

@@ -1,5 +1,5 @@
 import { Alegreya_700Bold, Alegreya_800ExtraBold } from '@expo-google-fonts/alegreya';
-import { Nunito_500Medium, Nunito_700Bold, Nunito_800ExtraBold } from '@expo-google-fonts/nunito';
+import { Nunito_500Medium, Nunito_700Bold, Nunito_800ExtraBold, Nunito_900Black } from '@expo-google-fonts/nunito';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,7 +17,7 @@ SystemUI.setBackgroundColorAsync(C.paper).catch(() => {});
 
 function Root() {
   const { ready } = useStore();
-  const [fonts] = useFonts({ Alegreya_700Bold, Alegreya_800ExtraBold, Nunito_500Medium, Nunito_700Bold, Nunito_800ExtraBold });
+  const [fonts] = useFonts({ Alegreya_700Bold, Alegreya_800ExtraBold, Nunito_500Medium, Nunito_700Bold, Nunito_800ExtraBold, Nunito_900Black });
   useEffect(() => { if (ready && fonts) SplashScreen.hideAsync().catch(() => {}); }, [ready, fonts]);
   useEffect(() => { preloadSfx(); }, []);
   if (!ready || !fonts) return null;

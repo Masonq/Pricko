@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, PressableProps, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, F, R } from './theme';
 
@@ -71,3 +71,19 @@ const st = StyleSheet.create({
   chipOn: { backgroundColor: C.indigo, borderColor: C.indigo },
   chipText: { fontFamily: F.bodyBold, fontSize: 14.5, color: C.ink },
 });
+
+/** Объёмная кнопка: нижняя «тень» и проваливание при нажатии. */
+export function Btn3D({ children, onPress, disabled, face = C.card, shade = C.gray, border, depth = 4, radius = 16, style, faceStyle, haptic = true }: {
+  children?: React.ReactNode; onPress?: () => void; disabled?: boolean; face?: string; shade?: string; border?: string; depth?: number; radius?: number;
+  style?: StyleProp<ViewStyle>; faceStyle?: StyleProp<ViewStyle>; haptic?: boolean }) {
+  const y = useSharedValue(0);
+  const a = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  return (
+    <Pressable disabled={disabled} onPress={() => { if (haptic) Haptics.selectionAsync().catch(() => {}); onPress?.(); }}
+      onPressIn={() => { y.value = withTiming(depth, { duration: 60 }); }} onPressOut={() => { y.value = withTiming(0, { duration: 90 }); }}
+      style={[{ paddingBottom: depth }, style]}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: depth, borderRadius: radius, backgroundColor: shade }} />
+      <Animated.View style={[{ backgroundColor: face, borderRadius: radius, borderWidth: border ? 2 : 0, borderColor: border, alignItems: 'center', justifyContent: 'center' }, faceStyle, a]}>{children}</Animated.View>
+    </Pressable>
+  );
+}

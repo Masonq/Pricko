@@ -1,0 +1,100 @@
+== 2026-10-22 03:25:28
+active
+== последние события (ИИ, распознавание, озвучка)
+03:20:55 tts sr-RS-SophieNeural OK 1406ms 
+03:20:54 llm groq:openai/gpt-oss-120b OK 334ms 
+03:20:11 tts sr-RS-SophieNeural OK 1026ms 
+03:16:51 tts sr-RS-SophieNeural OK 18371ms 
+03:16:32 llm groq:openai/gpt-oss-120b OK 1078ms 
+03:14:58 tts sr-RS-SophieNeural OK 1600ms 
+03:14:57 tts sr-RS-SophieNeural OK 1636ms 
+03:14:56 tts sr-RS-SophieNeural OK 1516ms 
+03:11:35 tts sr-RS-SophieNeural OK 1486ms 
+03:11:33 llm groq:openai/gpt-oss-120b OK 737ms 
+03:10:33 tts sr-RS-SophieNeural OK 1643ms 
+03:10:10 tts sr-RS-SophieNeural OK 1428ms 
+03:10:08 llm groq:openai/gpt-oss-120b OK 436ms 
+03:09:55 tts sr-RS-SophieNeural OK 2194ms 
+02:47:07 stt whisper-large-v3 OK 353ms 
+02:47:03 stt whisper-large-v3 OK 360ms 
+02:47:00 stt whisper-large-v3 OK 351ms 
+02:46:56 tts sr-RS-SophieNeural OK 924ms 
+02:46:56 stt whisper-large-v3 OK 370ms 
+02:46:54 llm mistral:mistral-small-latest ОШИБКА 82ms 429 {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}
+02:46:51 llm mistral:mistral-medium-latest ОШИБКА 178ms 429 {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}
+02:46:48 llm groq:openai/gpt-oss-20b OK 337ms 
+02:46:46 llm groq:openai/gpt-oss-120b OK 881ms 
+02:45:38 tts sr-RS-SophieNeural OK 1608ms 
+02:45:38 stt whisper-large-v3 OK 361ms 
+02:45:35 llm mistral:mistral-small-latest ОШИБКА 89ms 429 {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}
+02:45:32 llm mistral:mistral-medium-latest ОШИБКА 97ms 429 {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}
+02:45:29 llm groq:openai/gpt-oss-20b OK 249ms 
+02:45:28 llm groq:openai/gpt-oss-120b OK 653ms 
+02:42:32 stt whisper-large-v3 ОШИБКА 52ms 400 {"error":{"message":"file is empty","type":"invalid_request_error","code":"empty_audio_file"}}
+
+02:42:32 stt whisper-large-v3-turbo ОШИБКА 23ms 400 {"error":{"message":"file is empty","type":"invalid_request_error","code":"empty_audio_file"}}
+
+== запросы к /api/talk по устройствам сегодня
+('6l6tv6bf9hqmvisasz9', 'talk', 3)
+('6l6tv6bf9hqmvisasz9', 'story', 1)
+== журнал службы (последние 60 строк)
+INFO:     Uvicorn running on http://0.0.0.0:8077 (Press CTRL+C to quit)
+INFO:     Started parent process [799817]
+INFO:     Started server process [799827]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [799826]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+2026-10-22 02:46:44,878 INFO HTTP Request: GET https://api.groq.com/openai/v1/models "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:52710 - "GET /api/health HTTP/1.1" 200 OK
+2026-10-22 02:46:44,951 INFO HTTP Request: GET https://api.groq.com/openai/v1/models "HTTP/1.1 200 OK"
+2026-10-22 02:46:45,073 INFO HTTP Request: GET https://api.mistral.ai/v1/models "HTTP/1.1 200 OK"
+2026-10-22 02:46:45,080 INFO LLM cascade: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'mistral-medium-latest', 'mistral-small-latest']
+2026-10-22 02:46:45,101 INFO HTTP Request: GET https://api.mistral.ai/v1/models "HTTP/1.1 200 OK"
+2026-10-22 02:46:45,112 INFO LLM cascade: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'mistral-medium-latest', 'mistral-small-latest']
+INFO:     89.208.113.147:57526 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4169 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4184 - "GET /media/t_ef2d464468c64138b6514f35be47c900.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4606 - "GET /media/t_ef2d464468c64138b6514f35be47c900.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4453 - "GET /media/t_ef2d464468c64138b6514f35be47c900.mp3 HTTP/1.1" 206 Partial Content
+2026-10-22 03:10:08,939 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     87.116.132.90:4118 - "POST /api/talk HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4177 - "GET /media/t_65205b330cfe454bb88f73e3723e77fb.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4190 - "GET /media/t_65205b330cfe454bb88f73e3723e77fb.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4529 - "GET /media/t_65205b330cfe454bb88f73e3723e77fb.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4262 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4393 - "GET /media/t_8262dd33c9c546b0b9ed2f70e5ef099a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4264 - "GET /media/t_8262dd33c9c546b0b9ed2f70e5ef099a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4465 - "GET /media/t_8262dd33c9c546b0b9ed2f70e5ef099a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4126 - "GET /media/t_8262dd33c9c546b0b9ed2f70e5ef099a.mp3 HTTP/1.1" 206 Partial Content
+2026-10-22 03:11:33,816 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     87.116.132.90:4407 - "POST /api/talk HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4198 - "GET /media/t_517c3fce70ba4ae59af975ccbaf446ec.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4191 - "GET /media/t_517c3fce70ba4ae59af975ccbaf446ec.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4550 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4425 - "GET /media/t_e9d16aac0ed748e6bd5cff6080d8ca0a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4484 - "GET /media/t_e9d16aac0ed748e6bd5cff6080d8ca0a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4213 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4425 - "GET /media/t_6b0f401d9b4b4e6c9ec1523ef5e4df27.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4132 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4484 - "GET /media/t_6b0f401d9b4b4e6c9ec1523ef5e4df27.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4287 - "GET /media/t_6b0f401d9b4b4e6c9ec1523ef5e4df27.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4425 - "GET /media/t_3ba5b37e6ec646fa890518ee521cd191.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4346 - "GET /media/t_3ba5b37e6ec646fa890518ee521cd191.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4429 - "GET /media/t_3ba5b37e6ec646fa890518ee521cd191.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4138 - "GET /media/t_3ba5b37e6ec646fa890518ee521cd191.mp3 HTTP/1.1" 206 Partial Content
+2026-10-22 03:16:32,983 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     87.116.132.90:4492 - "POST /api/story HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4519 - "GET /media/s_6892a1715898421a987b07ae73a3d93a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4284 - "GET /media/s_6892a1715898421a987b07ae73a3d93a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4286 - "GET /media/s_6892a1715898421a987b07ae73a3d93a.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4357 - "POST /api/say HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4358 - "GET /media/t_64e1b2b818fe4a70a86351750175aecd.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4197 - "GET /media/t_64e1b2b818fe4a70a86351750175aecd.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4500 - "GET /media/t_64e1b2b818fe4a70a86351750175aecd.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4549 - "GET /media/t_64e1b2b818fe4a70a86351750175aecd.mp3 HTTP/1.1" 206 Partial Content
+2026-10-22 03:20:54,228 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     87.116.132.90:4152 - "POST /api/talk HTTP/1.1" 200 OK
+INFO:     87.116.132.90:4551 - "GET /media/t_ba6cb0163aaa4228b75254275987920e.mp3 HTTP/1.1" 206 Partial Content
+INFO:     87.116.132.90:4226 - "GET /media/t_ba6cb0163aaa4228b75254275987920e.mp3 HTTP/1.1" 206 Partial Content

@@ -43,7 +43,7 @@ export default function Talk() {
   useEffect(() => { say(device, sc.open).then(r => { setMsgs(m => m.map(x => x.id === 'open' ? { ...x, audio: r.audio } : x)); play(r.audio); }).catch(() => {}); }, []);
   useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60); }, [msgs.length, busy]);
 
-  const flash = (s: string) => { setNote(s); setTimeout(() => setNote(n => (n === s ? '' : n)), 2600); };
+  const flash = (s: string) => { setNote(s); setTimeout(() => setNote(n => (n === s ? '' : n)), 4500); };
   const errText = (e: unknown) => e instanceof ApiError ? (e.code === 'limit' ? t('limit') : e.code === 'offline' ? t('offline') : t('busy')) : t('busy');
 
   const send = useCallback(async (a: { audioUri?: string; text?: string }) => {
@@ -59,7 +59,7 @@ export default function Talk() {
       setHint(r.hint || ''); if (r.done) setDone(true);
       play(r.audio);
     } catch (e) {
-      setMsgs(m => m.filter(x => x.id !== mine.id)); flash(errText(e));
+      setMsgs(m => m.filter(x => x.id !== mine.id)); flash(errText(e) + (e instanceof ApiError ? ` (${e.message.slice(0, 50)})` : ''));
     } finally { setBusy(false); }
   }, [msgs, device, lang]);
 
@@ -68,31 +68,59 @@ export default function Talk() {
   const ring = useAnimatedStyle(() => ({ opacity: 0.35 * (1 - pulse.value), transform: [{ scale: 1 + pulse.value * 0.7 }] }));
   const btnScale = useSharedValue(1);
   const btnA = useAnimatedStyle(() => ({ transform: [{ scale: btnScale.value }] }));
+  // Запись: удержание — говоришь и отпускаешь; короткое нажатие — запись до второго нажатия.
+  const recRef = useRef(false), startingRef = useRef(false), pressAt = useRef(0), releaseAction = useRef<'none' | 'send' | 'keep'>('none'), maxTimer = useRef<any>(null);
+  const [tapMode, setTapMode] = useState(false);
   const startRec = async () => {
-    if (busy || rec) return;
+    startingRef.current = true; releaseAction.current = 'none';
     try {
-      const p = await AudioModule.requestRecordingPermissionsAsync();
-      if (!p.granted) { flash(t('micDenied')); return; }
+      let p = await AudioModule.getRecordingPermissionsAsync();
+      if (!p.granted) p = await AudioModule.requestRecordingPermissionsAsync();
+      if (!p.granted) { flash(t('micDenied')); startingRef.current = false; return; }
       try { player.pause(); } catch {}
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync(); recorder.record();
-      started.current = Date.now(); setRec(true);
+      started.current = Date.now(); recRef.current = true; setRec(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       btnScale.value = withSpring(1.12, { damping: 12 });
       pulse.value = 0; pulse.value = withRepeat(withTiming(1, { duration: 1100 }), -1, false);
-    } catch { flash(t('busy')); }
+      clearTimeout(maxTimer.current); maxTimer.current = setTimeout(() => { if (recRef.current) stopRec(true); }, 30000);
+    } catch (e) { flash(t('busy') + ' (mic: ' + String((e as any)?.message ?? e).slice(0, 60) + ')'); }
+    finally {
+      startingRef.current = false;
+      // палец отпустили, пока запись запускалась
+      const act = releaseAction.current as string;
+      if (recRef.current && act === 'send') stopRec(true);
+      if (recRef.current && act === 'keep') setTapMode(true);
+    }
   };
-  const stopRec = async () => {
-    if (!rec) return;
-    setRec(false); btnScale.value = withSpring(1, { damping: 14 }); cancelAnimation(pulse); pulse.value = withTiming(0);
+  const stopRec = async (sendIt: boolean) => {
+    if (!recRef.current) return;
+    recRef.current = false; setRec(false); setTapMode(false); clearTimeout(maxTimer.current);
+    btnScale.value = withSpring(1, { damping: 14 }); cancelAnimation(pulse); pulse.value = withTiming(0);
     try {
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       const dur = Date.now() - started.current;
-      if (dur < 700 || !recorder.uri) { flash(t('tooShort')); return; }
+      if (!sendIt) return;
+      if (dur < 600 || !recorder.uri) { flash(t('tooShort')); return; }
       send({ audioUri: recorder.uri });
-    } catch { flash(t('busy')); }
+    } catch (e) { flash(t('busy') + ' (rec: ' + String((e as any)?.message ?? e).slice(0, 60) + ')'); }
   };
+  const onMicIn = () => {
+    if (busy) return;
+    pressAt.current = Date.now();
+    if (recRef.current) { stopRec(true); return; }   // второе нажатие в режиме «нажал — говори»
+    if (!startingRef.current) startRec();
+  };
+  const onMicOut = () => {
+    const held = Date.now() - pressAt.current;
+    const action = held >= 450 ? 'send' : 'keep';
+    if (startingRef.current) { releaseAction.current = action; return; }
+    if (!recRef.current) return;
+    if (action === 'send') stopRec(true); else setTapMode(true);
+  };
+  useEffect(() => () => { clearTimeout(maxTimer.current); if (recRef.current) recorder.stop().catch(() => {}); }, []);
   const sendText = () => { const v = text.trim(); if (!v || busy) return; setText(''); send({ text: v }); };
   const restart = () => { setMsgs([{ id: 'open', role: 'assistant', text: sc.open, tr: lang === 'sr' ? '' : sc.openTr[lang] }]); setDone(false); setHint(''); };
 
@@ -148,13 +176,13 @@ export default function Talk() {
               <View style={s.micWrap}>
                 <Animated.View style={[s.ring, ring]} />
                 <Animated.View style={btnA}>
-                  <Press haptic={false} scale={1} onPressIn={startRec} onPressOut={stopRec} disabled={busy}
+                  <Press haptic={false} scale={1} onPressIn={onMicIn} onPressOut={onMicOut} disabled={busy}
                     style={[s.mic, rec && { backgroundColor: C.red }, busy && { opacity: 0.5 }, shadow(10)]}>
                     <View style={s.micIcon}><View style={s.micHead} /><View style={s.micStem} /><View style={s.micBase} /></View>
                   </Press>
                 </Animated.View>
               </View>
-              <Text style={s.micLabel}>{rec ? t('listening') : t('hold')}</Text>
+              <Text style={s.micLabel}>{rec ? (tapMode ? t('tapToSend') : t('listening')) : t('hold')}</Text>
             </View>
           )}
         </View>

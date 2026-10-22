@@ -7,6 +7,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput
 import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaUrl, sayCached, sttCheck } from '../../src/api';
+import { Confetti } from '../../src/confetti';
 import { allLessons, COURSE, Ex, fold, norm, shuffle, similar, tokens, ui, W } from '../../src/course';
 import { Lang } from '../../src/i18n';
 import { sfx } from '../../src/sfx';
@@ -302,6 +303,7 @@ export default function LessonScreen() {
     const ok = phase === 'done';
     return (
       <View style={[st.endWrap, { paddingTop: ins.top + 30, paddingBottom: ins.bottom + 20 }]}>
+        {ok && <Confetti />}
         <Animated.View entering={ZoomIn.springify().damping(10)}><Image source={ok ? IMG.happy : IMG.sad} style={{ width: 220, height: 230 }} contentFit="contain" /></Animated.View>
         <Animated.Text entering={FadeInDown.delay(200)} style={[st.endT, !ok && { color: RED }]}>{ok ? t('done') : t('outOfHearts')}</Animated.Text>
         {ok && newDay.current && (

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,9 +25,12 @@ function Bounce({ children }: { children: React.ReactNode }) {
 }
 
 export default function Path() {
-  const { t, lang, progress } = useStore();
+  const { t, lang, progress, goal } = useStore();
+  const dayXp = progress.daily?.[new Date().toISOString().slice(0, 10)] ?? 0;
   const ins = useSafeAreaInsets();
   const nextIdx = allLessons.findIndex(l => !progress.done[l.id]);
+  const scroll = useRef<ScrollView>(null); const unitY = useRef<Record<number, number>>({}); const nodesY = useRef<Record<number, number>>({}); const scrolled = useRef(false);
+  const goTo = (ui: number, y: number) => { if (scrolled.current) return; scrolled.current = true; const top = (unitY.current[ui] ?? 0) + (nodesY.current[ui] ?? 0) + y - 220; if (top > 40) setTimeout(() => scroll.current?.scrollTo({ y: top, animated: true }), 350); };
   let n = 0;
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
@@ -35,10 +38,10 @@ export default function Path() {
         <Flag />
         <View style={s.stat}><Image source={ICON.flame} style={[s.ic, !progress.streak && { opacity: 0.35 }]} contentFit="contain" /><Text style={[s.statT, { color: progress.streak ? C.orange : C.faint }]}>{progress.streak}</Text></View>
         <View style={s.stat}><Image source={ICON.star} style={s.ic} contentFit="contain" /><Text style={[s.statT, { color: '#E5A500' }]}>{progress.xp}</Text></View>
-        <View style={s.stat}><Image source={ICON.heart} style={s.ic} contentFit="contain" /><Text style={[s.statT, { color: C.red }]}>5</Text></View>
+        <View style={s.stat}><Image source={ICON.chest} style={[s.ic, { opacity: dayXp >= goal ? 1 : 0.45 }]} contentFit="contain" /><Text style={[s.statT, { color: dayXp >= goal ? C.greenShade : C.faint }]}>{Math.min(dayXp, goal)}/{goal}</Text></View>
         <Press onPress={() => router.push('/settings')} style={s.more}><View style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map(i => <View key={i} style={s.dot} />)}</View></Press>
       </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scroll} contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
         {(progress.mistakes?.length ?? 0) >= 3 && (
           <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <Btn3D onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: 'practice' } }); }} border={C.line} shade={C.line} radius={16} faceStyle={s.practice}>
@@ -50,7 +53,7 @@ export default function Path() {
         {COURSE.map((u, ui) => {
           const unitDone = u.lessons.every(l => progress.done[l.id]);
           return (
-            <View key={u.id}>
+            <View key={u.id} onLayout={e => { unitY.current[ui] = e.nativeEvent.layout.y; }}>
               <Animated.View entering={FadeInDown.delay(ui * 50).springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 20 }}>
                 <Btn3D face={u.color} shade={darken(u.color)} radius={16} haptic={false} faceStyle={s.unitFace}>
                   <View style={{ flex: 1 }}>
@@ -60,14 +63,14 @@ export default function Path() {
                   {lang !== 'sr' && <View style={[s.unitTag, { borderColor: 'rgba(255,255,255,0.45)' }]}><Text style={s.unitTagT}>{u.title.sr}</Text></View>}
                 </Btn3D>
               </Animated.View>
-              <View style={{ alignItems: 'center', paddingTop: 22, gap: 16 }}>
+              <View style={{ alignItems: 'center', paddingTop: 22, gap: 16 }} onLayout={e => { nodesY.current[ui] = e.nativeEvent.layout.y; }}>
                 <Image source={POSES[ui % POSES.length]} style={[s.pose, ui % 2 ? { left: 20 } : { right: 20 }]} contentFit="contain" />
                 {u.lessons.map(l => {
                   const idx = n++; const done = !!progress.done[l.id]; const cur = idx === nextIdx; const locked = !done && !cur;
                   const off = OFFS[idx % OFFS.length];
                   const face = locked ? C.gray : done ? '#FFC800' : u.color, sh = locked ? C.grayShade : done ? '#E5A500' : darken(u.color);
                   return (
-                    <View key={l.id} style={{ alignItems: 'center', transform: [{ translateX: off }] }}>
+                    <View key={l.id} style={{ alignItems: 'center', transform: [{ translateX: off }] }} onLayout={cur ? e => goTo(ui, e.nativeEvent.layout.y) : undefined}>
                       {cur && <Bounce><View style={s.tip}><Text style={[s.tipT, { color: u.color }]}>{t('start').toUpperCase()}</Text><View style={s.tipArrow} /></View></Bounce>}
                       <View style={cur ? s.ring : undefined}>
                         <Btn3D disabled={locked} onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: l.id } }); }} face={face} shade={sh} depth={7} radius={40} faceStyle={s.node}>

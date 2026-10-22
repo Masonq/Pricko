@@ -23,7 +23,7 @@ export default function Places() {
         </View>
         <View style={s.grid}>
           {SCENARIOS.map((sc, i) => (
-            <Animated.View key={sc.id} entering={FadeInDown.delay(60 * i).springify().damping(16)} style={s.cell}>
+            <Animated.View key={sc.id} entering={FadeInDown.delay(60 * i).duration(260)} style={s.cell}>
               <Press onPress={() => router.push({ pathname: '/talk/[id]', params: { id: sc.id } })} style={[s.card, shadow(10)]} scale={0.95}>
                 {sc.img ? <Image source={sc.img} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : (
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: C.ochre, alignItems: 'center', justifyContent: 'center' }]}>

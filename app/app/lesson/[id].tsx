@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaUrl, sayCached, sttCheck } from '../../src/api';
 import { Confetti } from '../../src/confetti';
@@ -53,8 +53,8 @@ function Character({ img = IMG.pricko, children }: { img?: any; children: React.
   const mood = React.useContext(MoodCtx);
   const y = useSharedValue(0), r = useSharedValue(0), sc = useSharedValue(1);
   useEffect(() => {
-    if (mood === 'ok') { y.value = withSequence(withTiming(-26, { duration: 180 }), withSpring(0, { damping: 6 })); sc.value = withSequence(withTiming(1.12, { duration: 180 }), withSpring(1)); }
-    else if (mood === 'bad') { r.value = withSequence(withTiming(-10, { duration: 70 }), withTiming(10, { duration: 70 }), withTiming(-8, { duration: 70 }), withTiming(8, { duration: 70 }), withSpring(0)); }
+    if (mood === 'ok') { y.value = withSequence(withTiming(-26, { duration: 180 }), withTiming(0, { duration: 200 })); sc.value = withSequence(withTiming(1.12, { duration: 180 }), withTiming(1, { duration: 200 })); }
+    else if (mood === 'bad') { r.value = withSequence(withTiming(-10, { duration: 70 }), withTiming(10, { duration: 70 }), withTiming(-8, { duration: 70 }), withTiming(8, { duration: 70 }), withTiming(0, { duration: 200 })); }
     else { y.value = withSequence(withTiming(-4, { duration: 900 }), withTiming(0, { duration: 900 })); }
   }, [mood]);
   const a = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }, { rotate: `${r.value}deg` }, { scale: sc.value }] }));
@@ -141,7 +141,7 @@ function Tiles({ ex, lang, set }: { ex: Extract<Ex, { t: 'tiles_sr' | 'tiles_ui'
       </Character>
       <View style={st.answerLine}>
         {picked.map(i => { const b = bank.find(x => x.i === i)!; return (
-          <Animated.View key={i} entering={ZoomIn.springify().damping(14)}>
+          <Animated.View key={i} entering={ZoomIn.duration(260)}>
             <Btn3D onPress={() => { sfx('pop'); setPicked(p => p.filter(x => x !== i)); }} border={C.line} shade={C.line} radius={14} depth={3} faceStyle={st.tile}><Text style={st.tileT}>{b.w}</Text></Btn3D>
           </Animated.View>); })}
       </View>
@@ -214,10 +214,10 @@ function Speak({ ex, lang, t, device, set, skip }: { ex: Extract<Ex, { t: 'speak
       try { voice.pause(); } catch {}
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await rec.prepareToRecordAsync(); rec.record(); setState('rec'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-      pulse.value = withSequence(withSpring(1.15), withSpring(1.05));
+      pulse.value = withSequence(withTiming(1.15, { duration: 200 }), withTiming(1.05, { duration: 200 }));
       return;
     }
-    setState('wait'); pulse.value = withSpring(1);
+    setState('wait'); pulse.value = withTiming(1, { duration: 200 });
     try {
       await rec.stop(); await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       const txt = rec.uri ? await sttCheck(device, rec.uri, ex.item.sr) : '';
@@ -337,7 +337,7 @@ export default function LessonScreen() {
   const total = lesson.ex.length;
   const doneCount = Math.min(total, stats.right);
   const bar = useSharedValue(0);
-  useEffect(() => { bar.value = withSpring(doneCount / total, { damping: 16 }); }, [doneCount]);
+  useEffect(() => { bar.value = withTiming(doneCount / total, { duration: 200 }); }, [doneCount]);
   const barA = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
   const hot = combo >= 3;
   const heartS = useSharedValue(1);
@@ -355,7 +355,7 @@ export default function LessonScreen() {
     } else {
       setCombo(0); sfx('wrong'); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       setStats(s => ({ ...s, wrong: s.wrong + 1 }));
-      heartS.value = withSequence(withTiming(1.4, { duration: 120 }), withSpring(1));
+      heartS.value = withSequence(withTiming(1.4, { duration: 120 }), withTiming(1, { duration: 200 }));
       setHearts(h => h - 1);
       setQueue(q => [...q, ex]); firstWrong.current.add(ex); const k = keyOf(ex); if (k && !practice) addMistake(k);
       if (ex.t !== 'mc_ui' && ex.t !== 'tiles_sr') speak(pending.correct);
@@ -382,10 +382,10 @@ export default function LessonScreen() {
     return (
       <View style={[st.endWrap, { paddingTop: ins.top + 30, paddingBottom: ins.bottom + 20 }]}>
         {ok && <Confetti />}
-        <Animated.View entering={ZoomIn.springify().damping(10)}><Image source={ok ? IMG.happy : IMG.sad} style={{ width: 220, height: 230 }} contentFit="contain" /></Animated.View>
+        <Animated.View entering={ZoomIn.duration(260)}><Image source={ok ? IMG.happy : IMG.sad} style={{ width: 220, height: 230 }} contentFit="contain" /></Animated.View>
         <Animated.Text entering={FadeInDown.delay(200)} style={[st.endT, !ok && { color: RED }]}>{ok ? t('done') : t('outOfHearts')}</Animated.Text>
         {ok && newDay.current && (
-          <Animated.View entering={ZoomIn.delay(500).springify().damping(9)} style={st.streakUp}>
+          <Animated.View entering={ZoomIn.delay(500).duration(260)} style={st.streakUp}>
             <Image source={ICON.flame} style={{ width: 30, height: 38 }} contentFit="contain" />
             <Text style={st.streakUpT}>{t('streakUp')} {progress.streak}</Text>
           </Animated.View>
@@ -414,12 +414,12 @@ export default function LessonScreen() {
         <View style={st.track}><Animated.View style={[st.fill, barA, hot && { backgroundColor: '#FF9600' }]}><View style={st.shine} /></Animated.View></View>
         <Animated.View style={[st.hearts, heartA]}><Image source={ICON.heart} style={{ width: 28, height: 24 }} contentFit="contain" /><Text style={st.heartsT}>{hearts}</Text></Animated.View>
       </View>
-      {combo >= 3 && !result && <Animated.View entering={ZoomIn.springify()} style={st.comboRow}><Image source={ICON.flame} style={{ width: 18, height: 22 }} contentFit="contain" /><Text style={st.combo}>{combo} {t('inRow')}</Text></Animated.View>}
-      {burst > 0 && <Animated.View key={burst} entering={ZoomIn.springify().damping(8)} pointerEvents="none" style={st.burst}><Image source={ICON.flame} style={{ width: 70, height: 86 }} contentFit="contain" /><Text style={st.burstT}>{combo} {t('inRow')}!</Text></Animated.View>}
+      {combo >= 3 && !result && <Animated.View entering={ZoomIn.duration(260)} style={st.comboRow}><Image source={ICON.flame} style={{ width: 18, height: 22 }} contentFit="contain" /><Text style={st.combo}>{combo} {t('inRow')}</Text></Animated.View>}
+      {burst > 0 && <Animated.View key={burst} entering={ZoomIn.duration(260)} pointerEvents="none" style={st.burst}><Image source={ICON.flame} style={{ width: 70, height: 86 }} contentFit="contain" /><Text style={st.burstT}>{combo} {t('inRow')}!</Text></Animated.View>}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <MoodCtx.Provider value={result ? (result.ok ? 'ok' : 'bad') : 'idle'}>
         <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 22, flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Animated.View key={pos} entering={FadeInDown.springify().damping(17)} style={{ flex: 1 }}>
+          <Animated.View key={pos} entering={FadeInDown.duration(260)} style={{ flex: 1 }}>
             <Text style={st.q}>{typeTitle[ex.t]}</Text>
             {(ex.t === 'mc_sr' || ex.t === 'mc_ui' || ex.t === 'listen_choose') && <MC ex={ex} lang={lang} set={setPending} />}
             {ex.t === 'img' && <ImgChoice ex={ex} set={setPending} />}
@@ -440,7 +440,7 @@ export default function LessonScreen() {
         )}
       </KeyboardAvoidingView>
       {result && (
-        <Animated.View entering={SlideInDown.springify().damping(18)} style={[st.sheet, { backgroundColor: result.ok ? GREEN_BG : RED_BG, paddingBottom: ins.bottom + 14 }]}>
+        <Animated.View entering={SlideInDown.duration(260)} style={[st.sheet, { backgroundColor: result.ok ? GREEN_BG : RED_BG, paddingBottom: ins.bottom + 14 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={[st.badge, { backgroundColor: result.ok ? GREEN : RED }]}><Image source={result.ok ? UIIMG.check : UIIMG.close} tintColor="#FFFFFF" style={{ width: 24, height: 24 }} /></View>
             <Text style={[st.sheetT, { color: result.ok ? GREEN_D : RED_D }]}>{result.ok ? t('correct') : t('wrongT')}</Text>

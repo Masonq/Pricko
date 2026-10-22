@@ -64,13 +64,13 @@ export default function Speed() {
     <View style={[s.wrap, { justifyContent: 'center', alignItems: 'center' }]}>
       <View style={s.glow} />
       <Image source={ICON.bolt} style={{ width: 120, height: 120 }} contentFit="contain" />
-      <Animated.Text key={count} entering={ZoomIn.springify().damping(8)} style={s.count}>{count === 0 ? t('go') : count}</Animated.Text>
+      <Animated.Text key={count} entering={ZoomIn.duration(260)} style={s.count}>{count === 0 ? t('go') : count}</Animated.Text>
     </View>
   );
   if (phase === 'end') return (
     <View style={[s.wrap, { alignItems: 'center', paddingTop: ins.top + 40, paddingBottom: ins.bottom + 20 }]}>
       {isBest && <Confetti />}
-      <Animated.View entering={ZoomIn.springify().damping(9)}><Image source={isBest ? IMG.happy : IMG.wave} style={{ width: 200, height: 210 }} contentFit="contain" /></Animated.View>
+      <Animated.View entering={ZoomIn.duration(260)}><Image source={isBest ? IMG.happy : IMG.wave} style={{ width: 200, height: 210 }} contentFit="contain" /></Animated.View>
       <Text style={[s.endT, { color: isBest ? '#FF9600' : '#3C3C3C' }]}>{isBest ? t('newBest') : t('score')}</Text>
       <Text style={s.big}>{score}</Text>
       <Text style={s.bestT}>{t('best')}: {Math.max(best, score)}</Text>
@@ -92,7 +92,7 @@ export default function Speed() {
       <View style={[s.glow, { top: '24%' }]} />
       <Animated.View style={[{ flex: 1, justifyContent: 'center' }, sA]}>
         {q && <Animated.Text key={q.w.sr + score} entering={ZoomIn.duration(180)} style={s.word}>{q.w.sr}</Animated.Text>}
-        {flash && <Animated.Text key={'f' + score} entering={ZoomIn.springify()} style={s.flash}>{flash}</Animated.Text>}
+        {flash && <Animated.Text key={'f' + score} entering={ZoomIn.duration(260)} style={s.flash}>{flash}</Animated.Text>}
       </Animated.View>
       <View style={s.grid}>
         {q?.opts.map((o, i) => (

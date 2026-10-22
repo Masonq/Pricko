@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming, cancelAnimation } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, cancelAnimation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError, mediaUrl, say, talk } from '../../src/api';
 import { SCENARIOS } from '../../src/scenarios';
@@ -84,7 +84,7 @@ export default function Talk() {
       await recorder.prepareToRecordAsync(); recorder.record();
       started.current = Date.now(); recRef.current = true; setRec(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-      btnScale.value = withSpring(1.12, { damping: 12 });
+      btnScale.value = withTiming(1.12, { duration: 200 });
       pulse.value = 0; pulse.value = withRepeat(withTiming(1, { duration: 1100 }), -1, false);
       clearTimeout(maxTimer.current); maxTimer.current = setTimeout(() => { if (recRef.current) stopRec(true); }, 30000);
     } catch (e) { flash(t('busy') + ' (mic: ' + String((e as any)?.message ?? e).slice(0, 60) + ')'); }
@@ -99,7 +99,7 @@ export default function Talk() {
   const stopRec = async (sendIt: boolean) => {
     if (!recRef.current) return;
     recRef.current = false; setRec(false); setTapMode(false); clearTimeout(maxTimer.current);
-    btnScale.value = withSpring(1, { damping: 14 }); cancelAnimation(pulse); pulse.value = withTiming(0);
+    btnScale.value = withTiming(1, { duration: 200 }); cancelAnimation(pulse); pulse.value = withTiming(0);
     try {
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
@@ -142,7 +142,7 @@ export default function Talk() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
           {msgs.map(m => (
-            <Animated.View key={m.id} entering={FadeInUp.springify().damping(17)} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            <Animated.View key={m.id} entering={FadeInUp.duration(260)} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '88%' }}>
                 {m.role === 'assistant' && <Image source={IMG.pricko} style={s.ava} contentFit="contain" />}
                 <Press haptic={false} scale={0.98} onPress={() => { if (m.role === 'assistant') { play(m.audio); setOpenTr(o => ({ ...o, [m.id]: !o[m.id] })); } }}
@@ -161,7 +161,7 @@ export default function Talk() {
           ))}
           {busy && <Animated.View entering={FadeIn} style={s.thinking}><Text style={s.thinkingText}>{t('thinking')}</Text></Animated.View>}
           {done && (
-            <Animated.View entering={FadeInDown.springify()} style={[s.done, shadow(8)]}>
+            <Animated.View entering={FadeInDown.duration(260)} style={[s.done, shadow(8)]}>
               <Text style={s.doneText}>{t('bravo')}</Text>
               <Press onPress={restart} style={s.again}><Text style={s.againText}>{t('again')}</Text></Press>
             </Animated.View>

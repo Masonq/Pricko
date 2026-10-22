@@ -19,7 +19,7 @@ export default function Stories() {
         <View style={{ flex: 1 }}><Text style={s.h1}>{t('stories')}</Text><Text style={s.sub}>{t('storiesSub')}</Text></View>
         <Image source={IMG.happy} style={{ width: 70, height: 72 }} contentFit="contain" />
       </View>
-      <Animated.View entering={FadeInDown.springify().damping(16)}>
+      <Animated.View entering={FadeInDown.duration(260)}>
         <Btn3D onPress={() => { sfx('pop'); router.push('/story/new'); }} face="#2B2552" shade="#1A1638" radius={22} depth={6} faceStyle={s.hero}>
           <Image source={IMG.space} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient colors={['rgba(20,16,50,0.05)', 'rgba(20,16,50,0.85)']} start={{ x: 0, y: 0.2 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
@@ -36,7 +36,7 @@ export default function Stories() {
       ) : (
         <View style={s.grid}>
           {stories.map((st, i) => (
-            <Animated.View key={st.id} entering={FadeInDown.delay(60 * i).springify().damping(17)} style={{ width: '50%', padding: 6 }}>
+            <Animated.View key={st.id} entering={FadeInDown.delay(60 * i).duration(260)} style={{ width: '50%', padding: 6 }}>
               <Press onPress={() => router.push({ pathname: '/story/[id]', params: { id: st.id } })} style={s.card} scale={0.96}>
                 <Image source={WORLD_IMG[st.world] ?? IMG.book} style={s.cover} contentFit="cover" />
                 <View style={{ padding: 10 }}>

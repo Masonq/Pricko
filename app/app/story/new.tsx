@@ -66,7 +66,7 @@ export default function StoryHome() {
           <Text style={s.label}>{t('world')}</Text>
           <View style={s.worlds}>
             {WORLDS.map((w, i) => (
-              <Animated.View key={w.id} entering={FadeInDown.delay(i * 50).springify().damping(16)} style={{ width: '50%', padding: 5 }}>
+              <Animated.View key={w.id} entering={FadeInDown.delay(i * 50).duration(260)} style={{ width: '50%', padding: 5 }}>
                 <Press onPress={() => setWorld(w.id)} style={[s.world, world === w.id && s.worldOn, shadow(world === w.id ? 10 : 4)]} scale={0.95}>
                   {w.img ? <Image source={w.img} style={StyleSheet.absoluteFill} contentFit="cover" /> : <View style={[StyleSheet.absoluteFill, { backgroundColor: w.tint }]} />}
                   <LinearGradient colors={['rgba(20,14,10,0)', 'rgba(20,14,10,0.7)']} start={{ x: 0, y: 0.35 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />

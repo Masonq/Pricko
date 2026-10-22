@@ -46,7 +46,7 @@ export default function Path() {
         <Press onPress={() => router.push('/settings')} style={s.more}><View style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map(i => <View key={i} style={s.dot} />)}</View></Press>
       </View>
       <ScrollView ref={scroll} contentContainerStyle={{ paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
+        <Animated.View entering={FadeInDown.duration(260)} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Btn3D onPress={() => { sfx('pop'); router.push('/speed'); }} face="#FFF6CC" border="#FFD84D" shade="#FFC800" radius={18} depth={5} faceStyle={s.speed}>
             <View style={s.speedGlow} />
             <Image source={ICON.bolt} style={{ width: 52, height: 52 }} contentFit="contain" />
@@ -54,7 +54,7 @@ export default function Path() {
           </Btn3D>
         </Animated.View>
         {(progress.mistakes?.length ?? 0) >= 3 && (
-          <Animated.View entering={FadeInDown.springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 16 }}>
+          <Animated.View entering={FadeInDown.duration(260)} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <Btn3D onPress={() => { sfx('pop'); router.push({ pathname: '/lesson/[id]', params: { id: 'practice' } }); }} border={C.line} shade={C.line} radius={16} faceStyle={s.practice}>
               <Image source={IMG.think} style={{ width: 54, height: 60 }} contentFit="contain" />
               <View style={{ flex: 1 }}><Text style={s.practiceT}>{t('practice')} ({progress.mistakes.length})</Text><Text style={s.practiceS}>{t('practiceSub')}</Text></View>
@@ -65,7 +65,7 @@ export default function Path() {
           const unitDone = u.lessons.every(l => progress.done[l.id]);
           return (
             <View key={u.id} onLayout={e => { unitY.current[ui] = e.nativeEvent.layout.y; }}>
-              <Animated.View entering={FadeInDown.delay(ui * 50).springify().damping(17)} style={{ marginHorizontal: 16, marginTop: 20 }}>
+              <Animated.View entering={FadeInDown.delay(ui * 50).duration(260)} style={{ marginHorizontal: 16, marginTop: 20 }}>
                 <Btn3D face={u.color} shade={darken(u.color)} radius={16} haptic={false} faceStyle={s.unitFace}>
                   <View style={{ flex: 1, paddingRight: 86 }}>
                     <Text style={s.unitN}>{t('unit').toUpperCase()} {ui + 1}</Text>
@@ -107,7 +107,7 @@ export default function Path() {
       {sheet && (
         <Animated.View entering={FadeIn.duration(150)} style={s.dim}>
           <Press haptic={false} scale={1} onPress={() => setSheet(null)} style={StyleSheet.absoluteFill}><View /></Press>
-          <Animated.View entering={SlideInDown.springify().damping(17)} style={[s.sheet, { backgroundColor: sheet.color }]}>
+          <Animated.View entering={SlideInDown.duration(260)} style={[s.sheet, { backgroundColor: sheet.color }]}>
             <Text style={s.sheetK}>{t('lessonN').toUpperCase()} {sheet.n} {t('ofN')} 3</Text>
             <Text style={s.sheetT}>{sheet.title}</Text>
             <Btn3D onPress={() => { const id = sheet.id; setSheet(null); router.push({ pathname: '/lesson/[id]', params: { id } }); }} face="#FFFFFF" shade="rgba(0,0,0,0.25)" radius={16} style={{ marginTop: 16 }} faceStyle={{ height: 54 }}>

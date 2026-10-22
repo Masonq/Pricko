@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, PressableProps, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, F, R } from './theme';
 
@@ -13,8 +13,8 @@ export function Press({ style, children, scale = 0.96, haptic = true, onPress, .
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
     <AP {...rest} style={[style, a]}
-      onPressIn={e => { s.value = withSpring(scale, { damping: 18, stiffness: 420 }); rest.onPressIn?.(e); }}
-      onPressOut={e => { s.value = withSpring(1, { damping: 12, stiffness: 260 }); rest.onPressOut?.(e); }}
+      onPressIn={e => { s.value = withTiming(scale, { duration: 90 }); rest.onPressIn?.(e); }}
+      onPressOut={e => { s.value = withTiming(1, { duration: 140 }); rest.onPressOut?.(e); }}
       onPress={e => { if (haptic) Haptics.selectionAsync().catch(() => {}); onPress?.(e); }}>
       {children}
     </AP>

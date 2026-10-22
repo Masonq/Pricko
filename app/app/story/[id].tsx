@@ -35,12 +35,12 @@ export default function Reader() {
           <LinearGradient colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0)', 'rgba(15,10,30,0.82)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
           <View style={s.heroText}>
             <Text style={s.kicker}>{st.name}</Text>
-            <Animated.Text entering={FadeInDown.springify().damping(16)} style={s.title}>{st.title}</Animated.Text>
+            <Animated.Text entering={FadeInDown.duration(260)} style={s.title}>{st.title}</Animated.Text>
           </View>
         </Animated.View>
         <View style={s.sheet}>
           {st.paragraphs.map((p, i) => (
-            <Animated.Text key={i} entering={FadeInDown.delay(120 + i * 70).springify().damping(18)} style={s.p}>
+            <Animated.Text key={i} entering={FadeInDown.delay(120 + i * 70).duration(260)} style={s.p}>
               {i === 0 ? <Text style={s.cap}>{p.charAt(0)}</Text> : null}{i === 0 ? p.slice(1) : p}
             </Animated.Text>
           ))}

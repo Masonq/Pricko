@@ -44,7 +44,7 @@ export default function Profile() {
         <View style={{ flex: 1 }}><Text style={s.h1}>{t('profile')}</Text></View>
         <Press onPress={() => router.push('/settings')} style={s.more}><View style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map(i => <View key={i} style={s.dot} />)}</View></Press>
       </View>
-      <Animated.View entering={FadeInDown.springify().damping(17)} style={s.hero}><Image source={IMG.wave} style={{ width: 150, height: 150 }} contentFit="contain" /></Animated.View>
+      <Animated.View entering={FadeInDown.duration(260)} style={s.hero}><Image source={IMG.wave} style={{ width: 150, height: 150 }} contentFit="contain" /></Animated.View>
 
       <Text style={s.h2}>{t('stats')}</Text>
       <View style={s.grid}>
